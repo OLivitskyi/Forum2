@@ -7,12 +7,17 @@
     --border-radius: 4px;
 
     margin: 0;
-    height: 100vh;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    height: 100%;
+    font-size: 18px;
     display: flex;
-    align-items: center;
     justify-content: center;
-    font-size: 18px; 
- 
+    align-items: center;
+    background-color: rgba(165, 218, 145, 0.5);
 }
 
 .container-login {
@@ -23,14 +28,10 @@
     box-shadow: 0 0 40px rgba(0, 0, 0, 0.2);
     border-radius: var(--border-radius);
     background: #ffffff;
-} 
+}
 
-.container,
-.form__input,
-.form__button {
+.form__input, .form__button {
     font: 500 1rem 'Quicksand', sans-serif;
-
-
 }
 
 .form--hidden {
@@ -79,7 +80,6 @@
     transition: background 0.2s, border-color 0.2s;
 }
 
-
 .form__input:focus {
     border-color: var(--color-primary);
     background: #ffffff;
@@ -98,7 +98,7 @@
 
 .form__button {
     width: 100%;
-    padding: 1rem 5rem;
+    padding: 1rem 0;
     font-weight: bold;
     font-size: 1.1rem;
     color: #ffffff;

@@ -72,6 +72,22 @@ CREATE TABLE IF NOT EXISTS sessions (
 	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	expires_at INTEGER NOT NULL,
 	FOREIGN KEY(user_id) REFERENCES users(user_id)
+);
+CREATE TABLE IF NOT EXISTS messages (
+	message_id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+	sender_id INTEGER NOT NULL,
+	receiver_id INTEGER NOT NULL,
+	content TEXT NOT NULL,
+	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	is_read BOOLEAN NOT NULL DEFAULT 0,
+	FOREIGN KEY(sender_id) REFERENCES users(user_id),
+	FOREIGN KEY(receiver_id) REFERENCES users(user_id)
+);
+CREATE TABLE IF NOT EXISTS user_status (
+	user_id INTEGER PRIMARY KEY NOT NULL,
+	is_online BOOLEAN NOT NULL DEFAULT 0,
+	last_activity TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	FOREIGN KEY(user_id) REFERENCES users(user_id)
 );`
 
 var DB *sql.DB
@@ -173,4 +189,104 @@ func GetUserID(username string, db *sql.DB) (int, error) {
 		return 0, err
 	}
 	return userID, nil
+}
+
+func AddMessage(senderID, receiverID int, content string) error {
+	if DB == nil {
+		return fmt.Errorf("db connection failed")
+	}
+
+	stmt, err := DB.Prepare(`INSERT INTO messages (sender_id, receiver_id, content, is_read) VALUES (?, ?, ?, 0)`)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(senderID, receiverID, content)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func GetMessages(senderID, receiverID int, limit, offset int) ([]Message, error) {
+	if DB == nil {
+		return nil, fmt.Errorf("db connection failed")
+	}
+
+	rows, err := DB.Query(`SELECT message_id, sender_id, receiver_id, content, created_at, is_read FROM messages WHERE (sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?) ORDER BY created_at DESC LIMIT ? OFFSET ?`, senderID, receiverID, receiverID, senderID, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var messages []Message
+	for rows.Next() {
+		var msg Message
+		err := rows.Scan(&msg.MessageID, &msg.SenderID, &msg.ReceiverID, &msg.Content, &msg.CreatedAt, &msg.IsRead)
+		if err != nil {
+			return nil, err
+		}
+		messages = append(messages, msg)
+	}
+	return messages, nil
+}
+
+func UpdateUserStatus(userID int, isOnline bool) error {
+	if DB == nil {
+		return fmt.Errorf("db connection failed")
+	}
+
+	stmt, err := DB.Prepare(`INSERT INTO user_status (user_id, is_online) VALUES (?, ?) ON CONFLICT(user_id) DO UPDATE SET is_online = ?, last_activity = CURRENT_TIMESTAMP`)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(userID, isOnline, isOnline)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func GetUserStatus() ([]UserStatus, error) {
+	if DB == nil {
+		return nil, fmt.Errorf("db connection failed")
+	}
+
+	rows, err := DB.Query(`SELECT user_id, is_online, last_activity FROM user_status`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var statuses []UserStatus
+	for rows.Next() {
+		var status UserStatus
+		err := rows.Scan(&status.UserID, &status.IsOnline, &status.LastActivity)
+		if err != nil {
+			return nil, err
+		}
+		statuses = append(statuses, status)
+	}
+	return statuses, nil
+}
+
+func MarkMessageAsRead(messageID int) error {
+	if DB == nil {
+		return fmt.Errorf("db connection failed")
+	}
+
+	stmt, err := DB.Prepare(`UPDATE messages SET is_read = 1 WHERE message_id = ?`)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(messageID)
+	if err != nil {
+		return err
+	}
+	return nil
 }

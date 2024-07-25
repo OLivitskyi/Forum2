@@ -27,6 +27,14 @@ func main() {
 	http.HandleFunc("/homepage", handlers.HomepageHandler)
 	http.HandleFunc("/validate-session", handlers.ValidateSessionHandler)
 
+	http.HandleFunc("/send-message", handlers.SendMessageHandler)
+	http.HandleFunc("/get-messages", handlers.GetMessagesHandler)
+	http.HandleFunc("/update-status", handlers.UpdateStatusHandler)
+	http.HandleFunc("/get-user-status", handlers.GetUserStatusHandler)
+	http.HandleFunc("/mark-message-as-read", handlers.MarkMessageAsReadHandler)
+
+	handlers.WebSocketHandler()
+
 	fmt.Printf("Starting server at port 8080\n")
 	fmt.Printf("Go to http://localhost:8080/\n")
 	fmt.Printf("Ctrl + C to close the server\n")
