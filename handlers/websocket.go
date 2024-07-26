@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strconv"
 	"sync"
+	"time"
 
 	"github.com/gorilla/websocket"
 )
@@ -24,24 +25,38 @@ func handleConnections(w http.ResponseWriter, r *http.Request) {
 	ws, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Fatalf("Error upgrading to websocket: %v", err)
+		return
 	}
-	defer ws.Close()
+	defer func() {
+		ws.Close()
+		log.Printf("User %d disconnected", clients[ws])
+		mutex.Lock()
+		delete(clients, ws)
+		mutex.Unlock()
+		db.UpdateUserStatus(clients[ws], false) // Update user status to offline
+	}()
 
+	// Read userID from query and store connection
 	userID, err := strconv.Atoi(r.URL.Query().Get("user_id"))
 	if err != nil {
 		log.Printf("Invalid user_id: %v", err)
 		return
 	}
+	log.Printf("User %d connected", userID)
+	mutex.Lock()
 	clients[ws] = userID
+	mutex.Unlock()
+	db.UpdateUserStatus(userID, true) // Update user status to online
 
 	for {
 		var msg db.WebSocketMessage
 		err := ws.ReadJSON(&msg)
 		if err != nil {
 			log.Printf("Error reading websocket message: %v", err)
-			delete(clients, ws)
 			break
 		}
+		msg.Timestamp = time.Now().Format(time.RFC3339)
+		log.Printf("Received message from user %d: %v", userID, msg)
 		broadcast <- msg
 	}
 }
@@ -49,13 +64,23 @@ func handleConnections(w http.ResponseWriter, r *http.Request) {
 func handleMessages() {
 	for {
 		msg := <-broadcast
+		log.Printf("Broadcasting message: %v", msg)
+		// Store message in the database
+		err := db.AddMessage(msg.Sender, msg.Receiver, msg.Content)
+		if err != nil {
+			log.Printf("Error storing message in the database: %v", err)
+			continue
+		}
+		// Broadcast message to all connected clients
 		for client := range clients {
 			if clients[client] == msg.Receiver {
 				err := client.WriteJSON(msg)
 				if err != nil {
 					log.Printf("Error writing to websocket: %v", err)
 					client.Close()
+					mutex.Lock()
 					delete(clients, client)
+					mutex.Unlock()
 				}
 			}
 		}

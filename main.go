@@ -31,7 +31,8 @@ func main() {
 	http.HandleFunc("/get-messages", handlers.GetMessagesHandler)
 	http.HandleFunc("/update-status", handlers.UpdateStatusHandler)
 	http.HandleFunc("/get-user-status", handlers.GetUserStatusHandler)
-	http.HandleFunc("/mark-message-as-read", handlers.MarkMessageAsReadHandler)
+	http.HandleFunc("/mark-message-read", handlers.MarkMessageAsReadHandler)
+	http.HandleFunc("/get-users", handlers.GetUsersHandler)
 
 	handlers.WebSocketHandler()
 

@@ -290,3 +290,32 @@ func MarkMessageAsRead(messageID int) error {
 	}
 	return nil
 }
+
+func GetUsersOrderedByLastMessageOrAlphabetically() ([]User, error) {
+	if DB == nil {
+		return nil, fmt.Errorf("db connection failed")
+	}
+
+	rows, err := DB.Query(`
+	SELECT users.user_id, users.username, MAX(messages.created_at) AS last_message_time
+	FROM users
+	LEFT JOIN messages ON users.user_id = messages.sender_id OR users.user_id = messages.receiver_id
+	GROUP BY users.user_id
+	ORDER BY last_message_time DESC, users.username ASC
+	`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var users []User
+	for rows.Next() {
+		var user User
+		err := rows.Scan(&user.Id, &user.Username)
+		if err != nil {
+			return nil, err
+		}
+		users = append(users, user)
+	}
+	return users, nil
+}

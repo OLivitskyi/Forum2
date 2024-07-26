@@ -112,3 +112,14 @@ func MarkMessageAsReadHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 }
+
+func GetUsersHandler(w http.ResponseWriter, r *http.Request) {
+	users, err := db.GetUsersOrderedByLastMessageOrAlphabetically()
+	if err != nil {
+		http.Error(w, "Failed to get users", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(users)
+}
