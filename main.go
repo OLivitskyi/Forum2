@@ -27,6 +27,7 @@ func main() {
 	http.HandleFunc("/homepage", handlers.HomepageHandler)
 	http.HandleFunc("/validate-session", handlers.ValidateSessionHandler)
 
+	//messages
 	http.HandleFunc("/send-message", handlers.SendMessageHandler)
 	http.HandleFunc("/get-messages", handlers.GetMessagesHandler)
 	http.HandleFunc("/update-status", handlers.UpdateStatusHandler)

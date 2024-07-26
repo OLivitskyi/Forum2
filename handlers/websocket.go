@@ -4,7 +4,6 @@ import (
 	"forum/db"
 	"log"
 	"net/http"
-	"strconv"
 	"sync"
 	"time"
 
@@ -33,20 +32,20 @@ func handleConnections(w http.ResponseWriter, r *http.Request) {
 		mutex.Lock()
 		delete(clients, ws)
 		mutex.Unlock()
-		db.UpdateUserStatus(clients[ws], false) // Update user status to offline
+		db.UpdateUserStatus(clients[ws], false)
 	}()
 
-	// Read userID from query and store connection
-	userID, err := strconv.Atoi(r.URL.Query().Get("user_id"))
+	// Read userID from session
+	userID, err := getUserIDFromSession(r)
 	if err != nil {
-		log.Printf("Invalid user_id: %v", err)
+		log.Printf("Unauthorized access: %v", err)
 		return
 	}
 	log.Printf("User %d connected", userID)
 	mutex.Lock()
 	clients[ws] = userID
 	mutex.Unlock()
-	db.UpdateUserStatus(userID, true) // Update user status to online
+	db.UpdateUserStatus(userID, true)
 
 	for {
 		var msg db.WebSocketMessage

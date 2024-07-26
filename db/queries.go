@@ -98,6 +98,10 @@ func ConnectDatabase() error {
 		log.Fatal(err)
 	}
 	DB = db
+	_, err = DB.Exec(createtables)
+	if err != nil {
+		log.Fatal(err)
+	}
 	return nil
 }
 
@@ -273,24 +277,6 @@ func GetUserStatus() ([]UserStatus, error) {
 	return statuses, nil
 }
 
-func MarkMessageAsRead(messageID int) error {
-	if DB == nil {
-		return fmt.Errorf("db connection failed")
-	}
-
-	stmt, err := DB.Prepare(`UPDATE messages SET is_read = 1 WHERE message_id = ?`)
-	if err != nil {
-		return err
-	}
-	defer stmt.Close()
-
-	_, err = stmt.Exec(messageID)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 func GetUsersOrderedByLastMessageOrAlphabetically() ([]User, error) {
 	if DB == nil {
 		return nil, fmt.Errorf("db connection failed")
@@ -318,4 +304,35 @@ func GetUsersOrderedByLastMessageOrAlphabetically() ([]User, error) {
 		users = append(users, user)
 	}
 	return users, nil
+}
+
+func GetUserIDFromSession(token string) (int, error) {
+	if DB == nil {
+		return 0, fmt.Errorf("db connection failed")
+	}
+
+	var userID int
+	err := DB.QueryRow(`SELECT user_id FROM sessions WHERE token = ?`, token).Scan(&userID)
+	if err != nil {
+		return 0, err
+	}
+	return userID, nil
+}
+
+func MarkMessageAsRead(messageID int, userID int) error {
+	if DB == nil {
+		return fmt.Errorf("db connection failed")
+	}
+
+	stmt, err := DB.Prepare(`UPDATE messages SET is_read = 1 WHERE message_id = ? AND receiver_id = ?`)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(messageID, userID)
+	if err != nil {
+		return err
+	}
+	return nil
 }

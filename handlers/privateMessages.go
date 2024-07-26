@@ -8,13 +8,22 @@ import (
 	"strconv"
 )
 
-func SendMessageHandler(w http.ResponseWriter, r *http.Request) {
-	senderID, err := strconv.Atoi(r.FormValue("sender_id"))
+func getUserIDFromSession(r *http.Request) (int, error) {
+	cookie, err := r.Cookie("session_token")
 	if err != nil {
-		log.Println("Invalid sender ID:", err)
-		http.Error(w, "Invalid sender ID", http.StatusBadRequest)
+		return 0, err
+	}
+	sessionToken := cookie.Value
+	return db.GetUserIDFromSession(sessionToken)
+}
+
+func SendMessageHandler(w http.ResponseWriter, r *http.Request) {
+	senderID, err := getUserIDFromSession(r)
+	if err != nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
+
 	receiverID, err := strconv.Atoi(r.FormValue("receiver_id"))
 	if err != nil {
 		log.Println("Invalid receiver ID:", err)
@@ -34,16 +43,16 @@ func SendMessageHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetMessagesHandler(w http.ResponseWriter, r *http.Request) {
-	senderID, err := strconv.Atoi(r.URL.Query().Get("sender_id"))
+	userID, err := getUserIDFromSession(r)
 	if err != nil {
-		log.Println("Invalid sender ID:", err)
-		http.Error(w, "Invalid sender ID", http.StatusBadRequest)
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
-	receiverID, err := strconv.Atoi(r.URL.Query().Get("receiver_id"))
+
+	otherUserID, err := strconv.Atoi(r.URL.Query().Get("user_id"))
 	if err != nil {
-		log.Println("Invalid receiver ID:", err)
-		http.Error(w, "Invalid receiver ID", http.StatusBadRequest)
+		log.Println("Invalid user ID:", err)
+		http.Error(w, "Invalid user ID", http.StatusBadRequest)
 		return
 	}
 	limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
@@ -55,7 +64,7 @@ func GetMessagesHandler(w http.ResponseWriter, r *http.Request) {
 		offset = 0
 	}
 
-	messages, err := db.GetMessages(senderID, receiverID, limit, offset)
+	messages, err := db.GetMessages(userID, otherUserID, limit, offset)
 	if err != nil {
 		log.Println("Failed to get messages:", err)
 		http.Error(w, "Failed to get messages", http.StatusInternalServerError)
@@ -67,10 +76,9 @@ func GetMessagesHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func UpdateStatusHandler(w http.ResponseWriter, r *http.Request) {
-	userID, err := strconv.Atoi(r.FormValue("user_id"))
+	userID, err := getUserIDFromSession(r)
 	if err != nil {
-		log.Println("Invalid user ID:", err)
-		http.Error(w, "Invalid user ID", http.StatusBadRequest)
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 	isOnline := r.FormValue("is_online") == "true"
@@ -98,13 +106,19 @@ func GetUserStatusHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func MarkMessageAsReadHandler(w http.ResponseWriter, r *http.Request) {
+	userID, err := getUserIDFromSession(r)
+	if err != nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
 	messageID, err := strconv.Atoi(r.FormValue("message_id"))
 	if err != nil {
 		http.Error(w, "Invalid message ID", http.StatusBadRequest)
 		return
 	}
 
-	err = db.MarkMessageAsRead(messageID)
+	err = db.MarkMessageAsRead(messageID, userID)
 	if err != nil {
 		http.Error(w, "Failed to mark message as read", http.StatusInternalServerError)
 		return
