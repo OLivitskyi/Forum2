@@ -35,12 +35,18 @@ func handleConnections(w http.ResponseWriter, r *http.Request) {
 		db.UpdateUserStatus(clients[ws], false)
 	}()
 
-	// Read userID from session
-	userID, err := getUserIDFromSession(r)
+	sessionToken := r.URL.Query().Get("session_token")
+	if sessionToken == "" {
+		log.Println("Unauthorized access: session token missing")
+		return
+	}
+
+	userID, err := db.GetUserIDFromSession(sessionToken)
 	if err != nil {
 		log.Printf("Unauthorized access: %v", err)
 		return
 	}
+
 	log.Printf("User %d connected", userID)
 	mutex.Lock()
 	clients[ws] = userID

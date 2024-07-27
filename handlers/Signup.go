@@ -5,17 +5,14 @@ import (
 	"forum/db"
 	"net/http"
 
-	// "database/sql"
 	_ "github.com/mattn/go-sqlite3"
 	"golang.org/x/crypto/bcrypt"
-	//"golang.org/x/crypto/bcrypt"
 )
 
 func SignupProcess(w http.ResponseWriter, r *http.Request) {
 	username := r.FormValue("signupUsername")
 	fmt.Println(username)
 	email := r.FormValue("email")
-	fmt.Println(email)
 	firstName := r.FormValue("firstname")
 	fmt.Println(firstName)
 	lastName := r.FormValue("lastname")
@@ -40,7 +37,6 @@ func SignupProcess(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	fmt.Fprintf(w, "User created successfully!")
-
 }
 
 func LoginProcess(w http.ResponseWriter, r *http.Request) {
@@ -48,19 +44,20 @@ func LoginProcess(w http.ResponseWriter, r *http.Request) {
 	password := r.FormValue("password")
 	login, err := db.LoginUser(db.DB, username, password)
 	if err != nil {
-		// fmt.Fprintf(w, "Cant find username or email")
 		w.WriteHeader(http.StatusForbidden)
 		w.Write([]byte(err.Error()))
+		return
 	}
-	// fmt.Printf("this is login:%v", login)
 
-	// fmt.Println(username + "\n" + password)
+	userID, err := db.GetUserID(username, db.DB)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("Failed to get user ID"))
+		return
+	}
 
-	NewSession(w, login.Username)
+	NewSession(w, login.Username, userID)
 
-	// rows, err := db.DB.Query("SELECT username, password, email FROM users WHERE username = ? OR email = ?")
-
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Login successful"))
 }
-
-
-// if its other text then internalservererror

@@ -62,4 +62,3 @@ INSERT INTO likes (post_ID, comment_ID, user_ID, type, created_at) VALUES
 (NULL, 7, 8, 1, '2022-06-11 12:00:00 UTC'),
 (8, NULL, 1, 0, '2022-06-11 12:00:00 UTC'),
 (NULL, 8, 1, 1, '2022-06-12 12:00:00 UTC');
-`

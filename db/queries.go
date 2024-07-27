@@ -8,10 +8,6 @@ import (
 	"strings"
 	"time"
 
-	// "log"
-
-	// "strings"
-
 	_ "github.com/mattn/go-sqlite3"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -105,31 +101,6 @@ func ConnectDatabase() error {
 	return nil
 }
 
-// func OpenDatabase() (*sql.DB, error) {
-// 	dbPath := "./db/database.db"
-
-// 	if _, err := os.Stat(dbPath); errors.Is(err, os.ErrNotExist) {
-
-// 		//Open a db connection
-// 		db, err := sql.Open("sqlite3", dbPath)
-// 		if err != nil {
-// 			return nil, err
-// 		}
-
-// 		// Tables
-// 		if _, err := db.Exec(createtables); err != nil {
-// 			return nil, err
-// 		}
-
-// 		return db, nil
-// 	}
-// 	db, err := sql.Open("sqlite3", dbPath)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	return db, nil
-// }
-
 func RegisterUser(data []string) ([]User, error) {
 	userList := []User{}
 
@@ -148,7 +119,7 @@ func RegisterUser(data []string) ([]User, error) {
 	if err != nil {
 		fmt.Println("error in stmt.exec, didn't write to the database because:")
 		fmt.Println(err)
-		return nil, err // potential security hole
+		return nil, err
 	}
 
 	return userList, nil
@@ -172,7 +143,6 @@ func LoginUser(db *sql.DB, usernameOrEmail, password string) (Login, error) {
 	if err != nil {
 		fmt.Println("Wrong password when logging in")
 		return login, errors.New("wrong Password")
-
 	}
 	fmt.Println("login worked")
 	return login, nil
@@ -314,8 +284,10 @@ func GetUserIDFromSession(token string) (int, error) {
 	var userID int
 	err := DB.QueryRow(`SELECT user_id FROM sessions WHERE token = ?`, token).Scan(&userID)
 	if err != nil {
+		log.Printf("Error finding session token: %v", err)
 		return 0, err
 	}
+	log.Printf("Session token found for user ID: %d", userID)
 	return userID, nil
 }
 
@@ -331,6 +303,44 @@ func MarkMessageAsRead(messageID int, userID int) error {
 	defer stmt.Close()
 
 	_, err = stmt.Exec(messageID, userID)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// SaveSession зберігає сесію в базу даних
+func SaveSession(token string, userID int, expiration time.Time) error {
+	if DB == nil {
+		return fmt.Errorf("db connection failed")
+	}
+
+	stmt, err := DB.Prepare(`INSERT INTO sessions (token, user_id, expires_at) VALUES (?, ?, ?)`)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(token, userID, expiration.Unix())
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// DeleteSession видаляє сесію з бази даних
+func DeleteSession(token string) error {
+	if DB == nil {
+		return fmt.Errorf("db connection failed")
+	}
+
+	stmt, err := DB.Prepare(`DELETE FROM sessions WHERE token = ?`)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(token)
 	if err != nil {
 		return err
 	}

@@ -80,7 +80,7 @@ func ValidateSessionHandler(w http.ResponseWriter, r *http.Request) {
 func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/logout" {
 		http.Error(w, "Page not found.", http.StatusNotFound)
-		return 
+		return
 	}
 
 	user := ValidateSession(r)

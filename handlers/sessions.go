@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"time"
 
+	"forum/db"
+
 	"github.com/gofrs/uuid/v5"
 )
 
@@ -17,7 +19,7 @@ type Session struct {
 var sessions = map[string]Session{}
 
 // NewSession creates a new session for the user
-func NewSession(w http.ResponseWriter, username string) {
+func NewSession(w http.ResponseWriter, username string, userID int) {
 	if isSessionUp(username) {
 		return
 	}
@@ -43,6 +45,12 @@ func NewSession(w http.ResponseWriter, username string) {
 		Path:    "/",
 	}
 	http.SetCookie(w, &cookie)
+
+	// Збереження сесії в базу даних
+	err = db.SaveSession(token.String(), userID, expiration)
+	if err != nil {
+		log.Fatalf("Failed to save session to database: %v", err)
+	}
 }
 
 // isSessionUp checks if a session is active for the user
@@ -99,5 +107,10 @@ func CloseSession(w http.ResponseWriter, r *http.Request) {
 			Path:   "/",
 		}
 		http.SetCookie(w, &cookie)
+
+		err = db.DeleteSession(sessionToken.Value)
+		if err != nil {
+			log.Printf("Failed to delete session from database: %v", err)
+		}
 	}
 }
