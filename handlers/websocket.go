@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/gofrs/uuid"
 	"github.com/gorilla/websocket"
 )
 
@@ -16,7 +17,7 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-var clients = make(map[*websocket.Conn]int)
+var clients = make(map[*websocket.Conn]uuid.UUID)
 var broadcast = make(chan db.WebSocketMessage)
 var mutex = &sync.Mutex{}
 
@@ -28,13 +29,14 @@ func handleConnections(w http.ResponseWriter, r *http.Request) {
 	}
 	defer func() {
 		ws.Close()
-		log.Printf("User %d disconnected", clients[ws])
+		log.Printf("User %s disconnected", clients[ws])
 		mutex.Lock()
 		delete(clients, ws)
 		mutex.Unlock()
 		db.UpdateUserStatus(clients[ws], false)
 	}()
 
+	// Read session token from query parameters
 	sessionToken := r.URL.Query().Get("session_token")
 	if sessionToken == "" {
 		log.Println("Unauthorized access: session token missing")
@@ -47,7 +49,7 @@ func handleConnections(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Printf("User %d connected", userID)
+	log.Printf("User %s connected", userID)
 	mutex.Lock()
 	clients[ws] = userID
 	mutex.Unlock()
@@ -61,7 +63,7 @@ func handleConnections(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 		msg.Timestamp = time.Now().Format(time.RFC3339)
-		log.Printf("Received message from user %d: %v", userID, msg)
+		log.Printf("Received message from user %s: %v", userID, msg)
 		broadcast <- msg
 	}
 }

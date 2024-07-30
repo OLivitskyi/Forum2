@@ -6,12 +6,14 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+
+	"github.com/gofrs/uuid"
 )
 
-func getUserIDFromSession(r *http.Request) (int, error) {
+func getUserIDFromSession(r *http.Request) (uuid.UUID, error) {
 	cookie, err := r.Cookie("session_token")
 	if err != nil {
-		return 0, err
+		return uuid.Nil, err
 	}
 	sessionToken := cookie.Value
 	return db.GetUserIDFromSession(sessionToken)
@@ -24,7 +26,7 @@ func SendMessageHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	receiverID, err := strconv.Atoi(r.FormValue("receiver_id"))
+	receiverID, err := uuid.FromString(r.FormValue("receiver_id"))
 	if err != nil {
 		log.Println("Invalid receiver ID:", err)
 		http.Error(w, "Invalid receiver ID", http.StatusBadRequest)
@@ -49,7 +51,7 @@ func GetMessagesHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	otherUserID, err := strconv.Atoi(r.URL.Query().Get("user_id"))
+	otherUserID, err := uuid.FromString(r.URL.Query().Get("user_id"))
 	if err != nil {
 		log.Println("Invalid user ID:", err)
 		http.Error(w, "Invalid user ID", http.StatusBadRequest)
@@ -112,7 +114,7 @@ func MarkMessageAsReadHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	messageID, err := strconv.Atoi(r.FormValue("message_id"))
+	messageID, err := uuid.FromString(r.FormValue("message_id"))
 	if err != nil {
 		http.Error(w, "Invalid message ID", http.StatusBadRequest)
 		return

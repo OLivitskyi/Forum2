@@ -1,13 +1,12 @@
 package handlers
 
 import (
+	"forum/db"
 	"log"
 	"net/http"
 	"time"
 
-	"forum/db"
-
-	"github.com/gofrs/uuid/v5"
+	"github.com/gofrs/uuid"
 )
 
 type Session struct {
@@ -19,7 +18,7 @@ type Session struct {
 var sessions = map[string]Session{}
 
 // NewSession creates a new session for the user
-func NewSession(w http.ResponseWriter, username string, userID int) {
+func NewSession(w http.ResponseWriter, username string, userID uuid.UUID) {
 	if isSessionUp(username) {
 		return
 	}
@@ -46,7 +45,6 @@ func NewSession(w http.ResponseWriter, username string, userID int) {
 	}
 	http.SetCookie(w, &cookie)
 
-	// Збереження сесії в базу даних
 	err = db.SaveSession(token.String(), userID, expiration)
 	if err != nil {
 		log.Fatalf("Failed to save session to database: %v", err)
@@ -94,8 +92,11 @@ func SessionExpired(r *http.Request) bool {
 func CloseSession(w http.ResponseWriter, r *http.Request) {
 	sessionToken, err := r.Cookie("session")
 	if err != nil {
+		http.Error(w, "No session cookie found", http.StatusBadRequest)
 		return
 	}
+
+	log.Printf("Attempting to close session: %s", sessionToken.Value)
 
 	_, ok := sessions[sessionToken.Value]
 	if ok {
@@ -113,4 +114,23 @@ func CloseSession(w http.ResponseWriter, r *http.Request) {
 			log.Printf("Failed to delete session from database: %v", err)
 		}
 	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Logout successful"))
+}
+
+// RequireLogin is a middleware that checks for a valid session
+func RequireLogin(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if SessionExpired(r) {
+			http.Redirect(w, r, "/", http.StatusFound)
+			return
+		}
+		username := ValidateSession(r)
+		if username == "" {
+			http.Redirect(w, r, "/", http.StatusFound)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
 }

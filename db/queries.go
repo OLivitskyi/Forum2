@@ -8,71 +8,72 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gofrs/uuid"
 	_ "github.com/mattn/go-sqlite3"
 	"golang.org/x/crypto/bcrypt"
 )
 
 const createtables string = `
 CREATE TABLE IF NOT EXISTS categories (
-	category_id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL ,
+	category_id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
 	category TEXT NOT NULL
 );
 CREATE TABLE IF NOT EXISTS users (
-	user_id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL ,
-	username TEXT NOT NULL UNIQUE ,
-	age INTEGER ,
-	gender TEXT ,
+	user_id UUID PRIMARY KEY NOT NULL,
+	username TEXT NOT NULL UNIQUE,
+	age INTEGER,
+	gender TEXT,
 	firstname TEXT NOT NULL,
 	lastname TEXT NOT NULL,
 	email TEXT NOT NULL UNIQUE,
 	password TEXT DEFAULT NULL
 );
 CREATE TABLE IF NOT EXISTS posts (
-	post_id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL ,
-	user_id INTEGER NOT NULL ,
-	title TEXT NOT NULL ,
-	content TEXT NOT NULL ,
-	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ,
+	post_id UUID PRIMARY KEY NOT NULL,
+	user_id UUID NOT NULL,
+	title TEXT NOT NULL,
+	content TEXT NOT NULL,
+	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	FOREIGN KEY(user_id) REFERENCES users(user_id)
 );
 CREATE TABLE IF NOT EXISTS comments (
-	comment_id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL ,
-	post_id INTEGER NOT NULL ,
-	user_id INTEGER NOT NULL ,
-	content TEXT NOT NULL ,
+	comment_id UUID PRIMARY KEY NOT NULL,
+	post_id UUID NOT NULL,
+	user_id UUID NOT NULL,
+	content TEXT NOT NULL,
 	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	FOREIGN KEY(post_id) REFERENCES posts(post_id),
 	FOREIGN KEY(user_id) REFERENCES users(user_id)
 );
 CREATE TABLE IF NOT EXISTS likes (
-	like_id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL ,
-    post_id INTEGER , 
-    comment_id INTEGER , 
-    user_id INTEGER NOT NULL , 
-    type INTEGER NOT NULL , 
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP , 
-    FOREIGN KEY(post_id) REFERENCES posts(post_id) , 
-    FOREIGN KEY(comment_id) REFERENCES comments(comment_id) , 
-    FOREIGN KEY(user_id) REFERENCES users(user_id)
+	like_id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+	post_id UUID,
+	comment_id UUID,
+	user_id UUID NOT NULL,
+	type INTEGER NOT NULL,
+	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	FOREIGN KEY(post_id) REFERENCES posts(post_id),
+	FOREIGN KEY(comment_id) REFERENCES comments(comment_id),
+	FOREIGN KEY(user_id) REFERENCES users(user_id)
 );
 CREATE TABLE IF NOT EXISTS post_categories (
-	post_id INTEGER NOT NULL, 
-	category_id INTEGER NOT NULL, 
-    FOREIGN KEY(post_id) REFERENCES posts(post_id) , 
-    FOREIGN KEY(category_id) REFERENCES categories(category_id)
+	post_id UUID NOT NULL,
+	category_id INTEGER NOT NULL,
+	FOREIGN KEY(post_id) REFERENCES posts(post_id),
+	FOREIGN KEY(category_id) REFERENCES categories(category_id)
 );
 CREATE TABLE IF NOT EXISTS sessions (
 	session_id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
 	token TEXT NOT NULL,
-	user_id INTEGER NOT NULL,
+	user_id UUID NOT NULL,
 	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	expires_at INTEGER NOT NULL,
 	FOREIGN KEY(user_id) REFERENCES users(user_id)
 );
 CREATE TABLE IF NOT EXISTS messages (
-	message_id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-	sender_id INTEGER NOT NULL,
-	receiver_id INTEGER NOT NULL,
+	message_id UUID PRIMARY KEY NOT NULL,
+	sender_id UUID NOT NULL,
+	receiver_id UUID NOT NULL,
 	content TEXT NOT NULL,
 	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	is_read BOOLEAN NOT NULL DEFAULT 0,
@@ -80,7 +81,7 @@ CREATE TABLE IF NOT EXISTS messages (
 	FOREIGN KEY(receiver_id) REFERENCES users(user_id)
 );
 CREATE TABLE IF NOT EXISTS user_status (
-	user_id INTEGER PRIMARY KEY NOT NULL,
+	user_id UUID PRIMARY KEY NOT NULL,
 	is_online BOOLEAN NOT NULL DEFAULT 0,
 	last_activity TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	FOREIGN KEY(user_id) REFERENCES users(user_id)
@@ -101,27 +102,31 @@ func ConnectDatabase() error {
 	return nil
 }
 
-func RegisterUser(data []string) ([]User, error) {
+func RegisterUser(data []interface{}) ([]User, error) {
 	userList := []User{}
-
 	if DB == nil {
-		fmt.Println("can't connect to database")
 		return nil, fmt.Errorf("db connection failed")
 	}
-
-	stmt, err := DB.Prepare(`INSERT INTO users (username, age, gender, firstname, lastname, email, password) VALUES (?, ?, ?, ?, ?, ?, ?)`)
+	stmt, err := DB.Prepare(`INSERT INTO users (user_id, username, age, gender, firstname, lastname, email, password) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`)
 	if err != nil {
-		log.Fatal(err)
+		log.Println("Prepare statement error:", err)
+		return nil, err
 	}
 	defer stmt.Close()
 
-	_, err = stmt.Exec(data[0], data[1], data[2], data[3], data[4], data[5], data[6])
+	userID, err := uuid.NewV4()
 	if err != nil {
-		fmt.Println("error in stmt.exec, didn't write to the database because:")
-		fmt.Println(err)
+		log.Println("UUID generation error:", err)
 		return nil, err
 	}
 
+	data = append([]interface{}{userID.String()}, data...)
+
+	_, err = stmt.Exec(data...)
+	if err != nil {
+		log.Println("Exec statement error:", err)
+		return nil, err
+	}
 	return userList, nil
 }
 
@@ -135,65 +140,228 @@ func LoginUser(db *sql.DB, usernameOrEmail, password string) (Login, error) {
 	}
 	err := db.QueryRow("SELECT username, email, password FROM users WHERE "+fieldname+" = ?", usernameOrEmail).Scan(&login.Username, &login.Email, &login.Password)
 	if err != nil {
-		fmt.Printf("error finding username or email: %v\n", usernameOrEmail)
 		return login, errors.New("can't find username or email")
 	}
-
 	err = bcrypt.CompareHashAndPassword([]byte(login.Password), []byte(password))
 	if err != nil {
-		fmt.Println("Wrong password when logging in")
 		return login, errors.New("wrong Password")
 	}
-	fmt.Println("login worked")
 	return login, nil
 }
 
-func CreatePostDB(db *sql.DB, userID int, title, content string, categories string, createdAt time.Time) error {
-	_, err := db.Exec("INSERT INTO posts (user_id, title, content, created_at) VALUES (?, ?, ?, ?)", userID, title, content, createdAt)
+func CreatePostDB(db *sql.DB, userID uuid.UUID, title, content string, categoryIDs []int, createdAt time.Time) error {
+	tx, err := db.Begin()
 	if err != nil {
 		return err
 	}
-	return nil
-}
 
-func GetUserID(username string, db *sql.DB) (int, error) {
-	var userID int
-	err := db.QueryRow("SELECT user_id FROM users WHERE username = ?", username).Scan(&userID)
-	if err != nil {
-		return 0, err
-	}
-	return userID, nil
-}
-
-func AddMessage(senderID, receiverID int, content string) error {
-	if DB == nil {
-		return fmt.Errorf("db connection failed")
-	}
-
-	stmt, err := DB.Prepare(`INSERT INTO messages (sender_id, receiver_id, content, is_read) VALUES (?, ?, ?, 0)`)
+	postID, err := uuid.NewV4()
 	if err != nil {
 		return err
 	}
-	defer stmt.Close()
 
-	_, err = stmt.Exec(senderID, receiverID, content)
+	_, err = tx.Exec("INSERT INTO posts (post_id, user_id, title, content, created_at) VALUES (?, ?, ?, ?, ?)", postID, userID, title, content, createdAt)
 	if err != nil {
+		tx.Rollback()
 		return err
 	}
-	return nil
-}
 
-func GetMessages(senderID, receiverID int, limit, offset int) ([]Message, error) {
-	if DB == nil {
-		return nil, fmt.Errorf("db connection failed")
+	for _, categoryID := range categoryIDs {
+		_, err = tx.Exec("INSERT INTO post_categories (post_id, category_id) VALUES (?, ?)", postID, categoryID)
+		if err != nil {
+			tx.Rollback()
+			return err
+		}
 	}
 
-	rows, err := DB.Query(`SELECT message_id, sender_id, receiver_id, content, created_at, is_read FROM messages WHERE (sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?) ORDER BY created_at DESC LIMIT ? OFFSET ?`, senderID, receiverID, receiverID, senderID, limit, offset)
+	return tx.Commit()
+}
+
+func GetPosts() ([]Post, error) {
+	rows, err := DB.Query(`
+		SELECT p.post_id, p.user_id, p.title, p.content, p.created_at, 
+		       COALESCE(SUM(CASE WHEN pr.type = 1 THEN 1 ELSE 0 END), 0) AS like_count,
+		       COALESCE(SUM(CASE WHEN pr.type = 2 THEN 1 ELSE 0 END), 0) AS dislike_count
+		FROM posts p
+		LEFT JOIN post_reactions pr ON p.post_id = pr.post_id
+		GROUP BY p.post_id
+		ORDER BY p.created_at DESC`)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
+	var posts []Post
+	for rows.Next() {
+		var p Post
+		err := rows.Scan(&p.ID, &p.UserID, &p.Subject, &p.Content, &p.CreatedAt, &p.LikeCount, &p.DislikeCount)
+		if err != nil {
+			return nil, err
+		}
+		user, err := GetUserByID(p.UserID)
+		if err != nil {
+			return nil, err
+		}
+		p.User = user
+
+		categories, err := GetPostCategories(p.ID)
+		if err != nil {
+			return nil, err
+		}
+		p.Categories = convertToCategoryPointers(categories)
+
+		comments, err := GetComments(p.ID)
+		if err != nil {
+			return nil, err
+		}
+		p.Comments = convertToCommentPointers(comments)
+
+		posts = append(posts, p)
+	}
+	return posts, nil
+}
+
+func convertToCategoryPointers(categories []Category) []*Category {
+	var categoryPointers []*Category
+	for i := range categories {
+		categoryPointers = append(categoryPointers, &categories[i])
+	}
+	return categoryPointers
+}
+
+func convertToCommentPointers(comments []Comment) []*Comment {
+	var commentPointers []*Comment
+	for i := range comments {
+		commentPointers = append(commentPointers, &comments[i])
+	}
+	return commentPointers
+}
+
+func GetPostCategories(postID uuid.UUID) ([]Category, error) {
+	rows, err := DB.Query(`
+        SELECT c.category_id, c.category
+        FROM categories c
+        JOIN post_categories pc ON c.category_id = pc.category_id
+        WHERE pc.post_id = ?`, postID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var categories []Category
+	for rows.Next() {
+		var c Category
+		err := rows.Scan(&c.ID, &c.Name)
+		if err != nil {
+			return nil, err
+		}
+		categories = append(categories, c)
+	}
+	return categories, nil
+}
+
+func CreateComment(postID, userID uuid.UUID, content string) error {
+	_, err := DB.Exec("INSERT INTO comments (comment_id, post_id, user_id, content, created_at) VALUES (?, ?, ?, ?, ?)", uuid.Must(uuid.NewV4()), postID, userID, content, time.Now())
+	return err
+}
+
+func GetComments(postID uuid.UUID) ([]Comment, error) {
+	rows, err := DB.Query(`
+		SELECT c.comment_id, c.user_id, u.username, c.content, c.created_at,
+		       COALESCE(SUM(CASE WHEN cr.type = 1 THEN 1 ELSE 0 END), 0) AS like_count,
+		       COALESCE(SUM(CASE WHEN cr.type = 2 THEN 1 ELSE 0 END), 0) AS dislike_count
+		FROM comments c
+		JOIN users u ON c.user_id = u.user_id
+		LEFT JOIN comment_reactions cr ON c.comment_id = cr.comment_id
+		WHERE c.post_id = ?
+		GROUP BY c.comment_id
+		ORDER BY c.created_at ASC`, postID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var comments []Comment
+	for rows.Next() {
+		var c Comment
+		err = rows.Scan(&c.ID, &c.UserID, &c.User.Username, &c.Content, &c.CreatedAt, &c.LikeCount, &c.DislikeCount)
+		if err != nil {
+			return nil, err
+		}
+		user, err := GetUserByID(c.UserID)
+		if err != nil {
+			return nil, err
+		}
+		c.User = user
+
+		comments = append(comments, c)
+	}
+	return comments, nil
+}
+
+func GetUserByID(userID uuid.UUID) (*User, error) {
+	var user User
+	err := DB.QueryRow("SELECT user_id, username, firstname, lastname, age, gender, email FROM users WHERE user_id = ?", userID).Scan(
+		&user.Id, &user.Username, &user.FirstName, &user.LastName, &user.Age, &user.Gender, &user.Email)
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
+func CreateCategory(name string) error {
+	_, err := DB.Exec("INSERT INTO categories (category) VALUES (?)", name)
+	return err
+}
+
+func GetCategories() ([]Category, error) {
+	rows, err := DB.Query("SELECT category_id, category FROM categories")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var categories []Category
+	for rows.Next() {
+		var c Category
+		err := rows.Scan(&c.ID, &c.Name)
+		if err != nil {
+			return nil, err
+		}
+		categories = append(categories, c)
+	}
+	return categories, nil
+}
+
+func AddMessage(senderID, receiverID uuid.UUID, content string) error {
+	if DB == nil {
+		return fmt.Errorf("db connection failed")
+	}
+	stmt, err := DB.Prepare(`INSERT INTO messages (message_id, sender_id, receiver_id, content, created_at, is_read) VALUES (?, ?, ?, ?, ?, 0)`)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+	messageID, err := uuid.NewV4()
+	if err != nil {
+		return err
+	}
+	_, err = stmt.Exec(messageID, senderID, receiverID, content, time.Now())
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func GetMessages(senderID, receiverID uuid.UUID, limit, offset int) ([]Message, error) {
+	if DB == nil {
+		return nil, fmt.Errorf("db connection failed")
+	}
+	rows, err := DB.Query(`SELECT message_id, sender_id, receiver_id, content, created_at, is_read FROM messages WHERE (sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?) ORDER BY created_at DESC LIMIT ? OFFSET ?`, senderID, receiverID, receiverID, senderID, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
 	var messages []Message
 	for rows.Next() {
 		var msg Message
@@ -206,17 +374,15 @@ func GetMessages(senderID, receiverID int, limit, offset int) ([]Message, error)
 	return messages, nil
 }
 
-func UpdateUserStatus(userID int, isOnline bool) error {
+func UpdateUserStatus(userID uuid.UUID, isOnline bool) error {
 	if DB == nil {
 		return fmt.Errorf("db connection failed")
 	}
-
 	stmt, err := DB.Prepare(`INSERT INTO user_status (user_id, is_online) VALUES (?, ?) ON CONFLICT(user_id) DO UPDATE SET is_online = ?, last_activity = CURRENT_TIMESTAMP`)
 	if err != nil {
 		return err
 	}
 	defer stmt.Close()
-
 	_, err = stmt.Exec(userID, isOnline, isOnline)
 	if err != nil {
 		return err
@@ -228,13 +394,11 @@ func GetUserStatus() ([]UserStatus, error) {
 	if DB == nil {
 		return nil, fmt.Errorf("db connection failed")
 	}
-
 	rows, err := DB.Query(`SELECT user_id, is_online, last_activity FROM user_status`)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-
 	var statuses []UserStatus
 	for rows.Next() {
 		var status UserStatus
@@ -251,7 +415,6 @@ func GetUsersOrderedByLastMessageOrAlphabetically() ([]User, error) {
 	if DB == nil {
 		return nil, fmt.Errorf("db connection failed")
 	}
-
 	rows, err := DB.Query(`
 	SELECT users.user_id, users.username, MAX(messages.created_at) AS last_message_time
 	FROM users
@@ -263,7 +426,6 @@ func GetUsersOrderedByLastMessageOrAlphabetically() ([]User, error) {
 		return nil, err
 	}
 	defer rows.Close()
-
 	var users []User
 	for rows.Next() {
 		var user User
@@ -276,32 +438,29 @@ func GetUsersOrderedByLastMessageOrAlphabetically() ([]User, error) {
 	return users, nil
 }
 
-func GetUserIDFromSession(token string) (int, error) {
+func GetUserIDFromSession(token string) (uuid.UUID, error) {
 	if DB == nil {
-		return 0, fmt.Errorf("db connection failed")
+		return uuid.Nil, fmt.Errorf("db connection failed")
 	}
-
-	var userID int
+	var userID uuid.UUID
 	err := DB.QueryRow(`SELECT user_id FROM sessions WHERE token = ?`, token).Scan(&userID)
 	if err != nil {
 		log.Printf("Error finding session token: %v", err)
-		return 0, err
+		return uuid.Nil, err
 	}
 	log.Printf("Session token found for user ID: %d", userID)
 	return userID, nil
 }
 
-func MarkMessageAsRead(messageID int, userID int) error {
+func MarkMessageAsRead(messageID uuid.UUID, userID uuid.UUID) error {
 	if DB == nil {
 		return fmt.Errorf("db connection failed")
 	}
-
 	stmt, err := DB.Prepare(`UPDATE messages SET is_read = 1 WHERE message_id = ? AND receiver_id = ?`)
 	if err != nil {
 		return err
 	}
 	defer stmt.Close()
-
 	_, err = stmt.Exec(messageID, userID)
 	if err != nil {
 		return err
@@ -309,18 +468,15 @@ func MarkMessageAsRead(messageID int, userID int) error {
 	return nil
 }
 
-// SaveSession зберігає сесію в базу даних
-func SaveSession(token string, userID int, expiration time.Time) error {
+func SaveSession(token string, userID uuid.UUID, expiration time.Time) error {
 	if DB == nil {
 		return fmt.Errorf("db connection failed")
 	}
-
 	stmt, err := DB.Prepare(`INSERT INTO sessions (token, user_id, expires_at) VALUES (?, ?, ?)`)
 	if err != nil {
 		return err
 	}
 	defer stmt.Close()
-
 	_, err = stmt.Exec(token, userID, expiration.Unix())
 	if err != nil {
 		return err
@@ -328,21 +484,75 @@ func SaveSession(token string, userID int, expiration time.Time) error {
 	return nil
 }
 
-// DeleteSession видаляє сесію з бази даних
 func DeleteSession(token string) error {
 	if DB == nil {
 		return fmt.Errorf("db connection failed")
 	}
-
 	stmt, err := DB.Prepare(`DELETE FROM sessions WHERE token = ?`)
 	if err != nil {
 		return err
 	}
 	defer stmt.Close()
-
 	_, err = stmt.Exec(token)
 	if err != nil {
 		return err
 	}
 	return nil
+}
+
+func GetUserID(username string, db *sql.DB) (uuid.UUID, error) {
+	var userID uuid.UUID
+	err := db.QueryRow("SELECT user_id FROM users WHERE username = ?", username).Scan(&userID)
+	if err != nil {
+		return uuid.Nil, err
+	}
+	return userID, nil
+}
+
+func AddPostReaction(userID, postID uuid.UUID, reactionType ReactionType) error {
+	_, err := DB.Exec("INSERT INTO likes (user_id, post_id, type, created_at) VALUES (?, ?, ?, ?)", userID, postID, reactionType, time.Now())
+	return err
+}
+
+func AddCommentReaction(userID, commentID uuid.UUID, reactionType ReactionType) error {
+	_, err := DB.Exec("INSERT INTO likes (user_id, comment_id, type, created_at) VALUES (?, ?, ?, ?)", userID, commentID, reactionType, time.Now())
+	return err
+}
+
+func GetPostReactions(postID uuid.UUID) ([]Reaction, error) {
+	rows, err := DB.Query("SELECT user_id, post_id, type FROM likes WHERE post_id = ?", postID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var reactions []Reaction
+	for rows.Next() {
+		var r Reaction
+		err := rows.Scan(&r.UserID, &r.PostID, &r.Type)
+		if err != nil {
+			return nil, err
+		}
+		reactions = append(reactions, r)
+	}
+	return reactions, nil
+}
+
+func GetCommentReactions(commentID uuid.UUID) ([]Reaction, error) {
+	rows, err := DB.Query("SELECT user_id, comment_id, type FROM likes WHERE comment_id = ?", commentID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var reactions []Reaction
+	for rows.Next() {
+		var r Reaction
+		err := rows.Scan(&r.UserID, &r.CommentID, &r.Type)
+		if err != nil {
+			return nil, err
+		}
+		reactions = append(reactions, r)
+	}
+	return reactions, nil
 }

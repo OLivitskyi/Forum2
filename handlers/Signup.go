@@ -4,32 +4,33 @@ import (
 	"fmt"
 	"forum/db"
 	"net/http"
+	"strconv"
 
-	_ "github.com/mattn/go-sqlite3"
 	"golang.org/x/crypto/bcrypt"
 )
 
 func SignupProcess(w http.ResponseWriter, r *http.Request) {
 	username := r.FormValue("signupUsername")
-	fmt.Println(username)
 	email := r.FormValue("email")
 	firstName := r.FormValue("firstname")
-	fmt.Println(firstName)
 	lastName := r.FormValue("lastname")
-	fmt.Println(lastName)
-	age := r.FormValue("age")
-	fmt.Println(age)
+	ageStr := r.FormValue("age")
 	gender := r.FormValue("gender")
-	fmt.Println(gender)
 	password := r.FormValue("signupPassword")
-	fmt.Println(password)
+
+	age, err := strconv.Atoi(ageStr)
+	if err != nil {
+		http.Error(w, "Invalid age format", http.StatusBadRequest)
+		return
+	}
+
 	encryptedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
-		fmt.Println(err)
 		http.Error(w, "Error hashing password", http.StatusInternalServerError)
+		return
 	}
-	fmt.Println(encryptedPassword)
-	data := []string{username, age, gender, firstName, lastName, email, string(encryptedPassword)}
+
+	data := []interface{}{username, age, gender, firstName, lastName, email, string(encryptedPassword)}
 	_, err = db.RegisterUser(data)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
