@@ -18,7 +18,7 @@ var upgrader = websocket.Upgrader{
 }
 
 var clients = make(map[*websocket.Conn]uuid.UUID)
-var broadcast = make(chan db.WebSocketMessage)
+var broadcast = make(chan interface{})
 var mutex = &sync.Mutex{}
 
 func handleConnections(w http.ResponseWriter, r *http.Request) {
@@ -56,32 +56,72 @@ func handleConnections(w http.ResponseWriter, r *http.Request) {
 	db.UpdateUserStatus(userID, true)
 
 	for {
-		var msg db.WebSocketMessage
+		var msg interface{}
 		err := ws.ReadJSON(&msg)
 		if err != nil {
 			log.Printf("Error reading websocket message: %v", err)
 			break
 		}
-		msg.Timestamp = time.Now().Format(time.RFC3339)
-		log.Printf("Received message from user %s: %v", userID, msg)
-		broadcast <- msg
+
+		switch m := msg.(type) {
+		case db.WebSocketMessage:
+			m.Timestamp = time.Now().Format(time.RFC3339)
+			log.Printf("Received message from user %s: %v", userID, m)
+			broadcast <- m
+
+		case db.ReactionMessage:
+			m.UserID = userID // Ensure the reaction comes from the logged-in user
+			log.Printf("Received reaction from user %s: %v", userID, m)
+			broadcast <- m
+
+		default:
+			log.Printf("Unknown message type: %T", m)
+		}
 	}
 }
 
 func handleMessages() {
 	for {
 		msg := <-broadcast
-		log.Printf("Broadcasting message: %v", msg)
-		// Store message in the database
-		err := db.AddMessage(msg.Sender, msg.Receiver, msg.Content)
-		if err != nil {
-			log.Printf("Error storing message in the database: %v", err)
-			continue
-		}
-		// Broadcast message to all connected clients
-		for client := range clients {
-			if clients[client] == msg.Receiver {
-				err := client.WriteJSON(msg)
+
+		switch m := msg.(type) {
+		case db.WebSocketMessage:
+			log.Printf("Broadcasting message: %v", m)
+			err := db.AddMessage(m.Sender, m.Receiver, m.Content)
+			if err != nil {
+				log.Printf("Error storing message in the database: %v", err)
+				continue
+			}
+			for client := range clients {
+				if clients[client] == m.Receiver {
+					err := client.WriteJSON(m)
+					if err != nil {
+						log.Printf("Error writing to websocket: %v", err)
+						client.Close()
+						mutex.Lock()
+						delete(clients, client)
+						mutex.Unlock()
+					}
+				}
+			}
+
+		case db.ReactionMessage:
+			log.Printf("Broadcasting reaction: %v", m)
+			if m.PostID != uuid.Nil {
+				err := db.AddPostReaction(m.UserID, m.PostID, m.ReactionType)
+				if err != nil {
+					log.Printf("Error storing post reaction in the database: %v", err)
+					continue
+				}
+			} else if m.CommentID != uuid.Nil {
+				err := db.AddCommentReaction(m.UserID, m.CommentID, m.ReactionType)
+				if err != nil {
+					log.Printf("Error storing comment reaction in the database: %v", err)
+					continue
+				}
+			}
+			for client := range clients {
+				err := client.WriteJSON(m)
 				if err != nil {
 					log.Printf("Error writing to websocket: %v", err)
 					client.Close()
@@ -90,6 +130,9 @@ func handleMessages() {
 					mutex.Unlock()
 				}
 			}
+
+		default:
+			log.Printf("Unknown message type: %T", m)
 		}
 	}
 }

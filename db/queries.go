@@ -179,13 +179,13 @@ func CreatePostDB(db *sql.DB, userID uuid.UUID, title, content string, categoryI
 
 func GetPosts() ([]Post, error) {
 	rows, err := DB.Query(`
-		SELECT p.post_id, p.user_id, p.title, p.content, p.created_at, 
-		       COALESCE(SUM(CASE WHEN pr.type = 1 THEN 1 ELSE 0 END), 0) AS like_count,
-		       COALESCE(SUM(CASE WHEN pr.type = 2 THEN 1 ELSE 0 END), 0) AS dislike_count
-		FROM posts p
-		LEFT JOIN post_reactions pr ON p.post_id = pr.post_id
-		GROUP BY p.post_id
-		ORDER BY p.created_at DESC`)
+        SELECT p.post_id, p.user_id, p.title, p.content, p.created_at, 
+               COALESCE(SUM(CASE WHEN pr.type = 'like' THEN 1 ELSE 0 END), 0) AS like_count,
+               COALESCE(SUM(CASE WHEN pr.type = 'dislike' THEN 1 ELSE 0 END), 0) AS dislike_count
+        FROM posts p
+        LEFT JOIN likes pr ON p.post_id = pr.post_id
+        GROUP BY p.post_id
+        ORDER BY p.created_at DESC`)
 	if err != nil {
 		return nil, err
 	}
@@ -267,15 +267,15 @@ func CreateComment(postID, userID uuid.UUID, content string) error {
 
 func GetComments(postID uuid.UUID) ([]Comment, error) {
 	rows, err := DB.Query(`
-		SELECT c.comment_id, c.user_id, u.username, c.content, c.created_at,
-		       COALESCE(SUM(CASE WHEN cr.type = 1 THEN 1 ELSE 0 END), 0) AS like_count,
-		       COALESCE(SUM(CASE WHEN cr.type = 2 THEN 1 ELSE 0 END), 0) AS dislike_count
-		FROM comments c
-		JOIN users u ON c.user_id = u.user_id
-		LEFT JOIN comment_reactions cr ON c.comment_id = cr.comment_id
-		WHERE c.post_id = ?
-		GROUP BY c.comment_id
-		ORDER BY c.created_at ASC`, postID)
+        SELECT c.comment_id, c.user_id, u.username, c.content, c.created_at,
+               COALESCE(SUM(CASE WHEN cr.type = 'like' THEN 1 ELSE 0 END), 0) AS like_count,
+               COALESCE(SUM(CASE WHEN cr.type = 'dislike' THEN 1 ELSE 0 END), 0) AS dislike_count
+        FROM comments c
+        JOIN users u ON c.user_id = u.user_id
+        LEFT JOIN likes cr ON c.comment_id = cr.comment_id
+        WHERE c.post_id = ?
+        GROUP BY c.comment_id
+        ORDER BY c.created_at ASC`, postID)
 	if err != nil {
 		return nil, err
 	}
@@ -509,6 +509,7 @@ func GetUserID(username string, db *sql.DB) (uuid.UUID, error) {
 	return userID, nil
 }
 
+// add reaction from socket
 func AddPostReaction(userID, postID uuid.UUID, reactionType ReactionType) error {
 	_, err := DB.Exec("INSERT INTO likes (user_id, post_id, type, created_at) VALUES (?, ?, ?, ?)", userID, postID, reactionType, time.Now())
 	return err

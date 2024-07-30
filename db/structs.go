@@ -101,3 +101,10 @@ type Session struct {
 	SessionToken string    `json:"session_token"`
 	ExpireTime   time.Time `json:"expire_time"`
 }
+
+type ReactionMessage struct {
+	UserID       uuid.UUID    `json:"user_id"`
+	PostID       uuid.UUID    `json:"post_id,omitempty"`
+	CommentID    uuid.UUID    `json:"comment_id,omitempty"`
+	ReactionType ReactionType `json:"type"`
+}
