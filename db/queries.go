@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE TABLE IF NOT EXISTS posts (
 	post_id UUID PRIMARY KEY NOT NULL,
 	user_id UUID NOT NULL,
-	title TEXT NOT NULL,
+	subject TEXT NOT NULL,
 	content TEXT NOT NULL,
 	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	FOREIGN KEY(user_id) REFERENCES users(user_id)
@@ -149,7 +149,7 @@ func LoginUser(db *sql.DB, usernameOrEmail, password string) (Login, error) {
 	return login, nil
 }
 
-func CreatePostDB(db *sql.DB, userID uuid.UUID, title, content string, categoryIDs []int, createdAt time.Time) error {
+func CreatePostDB(db *sql.DB, userID uuid.UUID, subject, content string, categoryIDs []int, createdAt time.Time) error {
 	tx, err := db.Begin()
 	if err != nil {
 		return err
@@ -160,7 +160,7 @@ func CreatePostDB(db *sql.DB, userID uuid.UUID, title, content string, categoryI
 		return err
 	}
 
-	_, err = tx.Exec("INSERT INTO posts (post_id, user_id, title, content, created_at) VALUES (?, ?, ?, ?, ?)", postID, userID, title, content, createdAt)
+	_, err = tx.Exec("INSERT INTO posts (post_id, user_id, subject, content, created_at) VALUES (?, ?, ?, ?, ?)", postID, userID, subject, content, createdAt)
 	if err != nil {
 		tx.Rollback()
 		return err
@@ -179,7 +179,7 @@ func CreatePostDB(db *sql.DB, userID uuid.UUID, title, content string, categoryI
 
 func GetPosts() ([]Post, error) {
 	rows, err := DB.Query(`
-        SELECT p.post_id, p.user_id, p.title, p.content, p.created_at, 
+        SELECT p.post_id, p.user_id, p.subject, p.content, p.created_at, 
                COALESCE(SUM(CASE WHEN pr.type = 'like' THEN 1 ELSE 0 END), 0) AS like_count,
                COALESCE(SUM(CASE WHEN pr.type = 'dislike' THEN 1 ELSE 0 END), 0) AS dislike_count
         FROM posts p
@@ -500,9 +500,15 @@ func DeleteSession(token string) error {
 	return nil
 }
 
-func GetUserID(username string, db *sql.DB) (uuid.UUID, error) {
+func GetUserID(usernameOrEmail string, db *sql.DB) (uuid.UUID, error) {
 	var userID uuid.UUID
-	err := db.QueryRow("SELECT user_id FROM users WHERE username = ?", username).Scan(&userID)
+	var fieldname string
+	if strings.Contains(usernameOrEmail, "@") {
+		fieldname = "email"
+	} else {
+		fieldname = "username"
+	}
+	err := db.QueryRow("SELECT user_id FROM users WHERE "+fieldname+" = ?", usernameOrEmail).Scan(&userID)
 	if err != nil {
 		return uuid.Nil, err
 	}
@@ -556,4 +562,19 @@ func GetCommentReactions(commentID uuid.UUID) ([]Reaction, error) {
 		reactions = append(reactions, r)
 	}
 	return reactions, nil
+}
+
+func GetUserIDByUsernameOrEmail(usernameOrEmail string) (uuid.UUID, error) {
+	var userID uuid.UUID
+	var fieldname string
+	if strings.Contains(usernameOrEmail, "@") {
+		fieldname = "email"
+	} else {
+		fieldname = "username"
+	}
+	err := DB.QueryRow("SELECT user_id FROM users WHERE "+fieldname+" = ?", usernameOrEmail).Scan(&userID)
+	if err != nil {
+		return uuid.Nil, err
+	}
+	return userID, nil
 }
