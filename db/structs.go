@@ -16,13 +16,11 @@ type User struct {
 	Password  string    `json:"password"`
 	Email     string    `json:"email"`
 }
-
 type Login struct {
 	Username string `json:"username"`
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
-
 type Message struct {
 	MessageID  uuid.UUID `json:"message_id"`
 	SenderID   uuid.UUID `json:"sender_id"`
@@ -31,13 +29,11 @@ type Message struct {
 	CreatedAt  time.Time `json:"created_at"`
 	IsRead     bool      `json:"is_read"`
 }
-
 type UserStatus struct {
 	UserID       uuid.UUID `json:"user_id"`
 	IsOnline     bool      `json:"is_online"`
 	LastActivity time.Time `json:"last_activity"`
 }
-
 type WebSocketMessage struct {
 	Type      string    `json:"type"`
 	Content   string    `json:"content"`
@@ -46,12 +42,10 @@ type WebSocketMessage struct {
 	Timestamp string    `json:"timestamp"`
 	IsRead    bool      `json:"is_read"`
 }
-
 type Category struct {
 	ID   int    `json:"id"`
 	Name string `json:"name"`
 }
-
 type Post struct {
 	ID           uuid.UUID   `json:"id"`
 	UserID       uuid.UUID   `json:"user_id"`
@@ -64,7 +58,6 @@ type Post struct {
 	LikeCount    int         `json:"like_count"`
 	DislikeCount int         `json:"dislike_count"`
 }
-
 type Comment struct {
 	ID           uuid.UUID `json:"id"`
 	PostID       uuid.UUID `json:"post_id"`
@@ -75,12 +68,10 @@ type Comment struct {
 	LikeCount    int       `json:"like_count"`
 	DislikeCount int       `json:"dislike_count"`
 }
-
 type PostCategory struct {
 	PostID     uuid.UUID `json:"post_id"`
 	CategoryID int       `json:"category_id"`
 }
-
 type Reaction struct {
 	UserID     uuid.UUID    `json:"user_id"`
 	PostID     uuid.UUID    `json:"post_id,omitempty"`
@@ -88,7 +79,6 @@ type Reaction struct {
 	ReactionID int          `json:"reaction_id"`
 	Type       ReactionType `json:"type"`
 }
-
 type ReactionType string
 
 const (
@@ -101,7 +91,6 @@ type Session struct {
 	SessionToken string    `json:"session_token"`
 	ExpireTime   time.Time `json:"expire_time"`
 }
-
 type ReactionMessage struct {
 	UserID       uuid.UUID    `json:"user_id"`
 	PostID       uuid.UUID    `json:"post_id,omitempty"`

@@ -22,20 +22,16 @@ func NewSession(w http.ResponseWriter, username string, userID uuid.UUID) {
 	if isSessionUp(username) {
 		return
 	}
-
 	token, err := uuid.NewV4()
 	if err != nil {
 		log.Fatalf("Failed to generate UUID: %v", err)
 	}
-
 	session := Session{
 		Username:     username,
 		sessionToken: token.String(),
 		expireTime:   time.Now().Add(100 * time.Minute),
 	}
-
 	sessions[token.String()] = session
-
 	expiration := time.Now().Add(4 * time.Hour)
 	cookie := http.Cookie{
 		Name:    "session",
@@ -44,7 +40,6 @@ func NewSession(w http.ResponseWriter, username string, userID uuid.UUID) {
 		Path:    "/",
 	}
 	http.SetCookie(w, &cookie)
-
 	err = db.SaveSession(token.String(), userID, expiration)
 	if err != nil {
 		log.Fatalf("Failed to save session to database: %v", err)
@@ -95,9 +90,7 @@ func CloseSession(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "No session cookie found", http.StatusBadRequest)
 		return
 	}
-
 	log.Printf("Attempting to close session: %s", sessionToken.Value)
-
 	_, ok := sessions[sessionToken.Value]
 	if ok {
 		delete(sessions, sessionToken.Value)
@@ -108,13 +101,11 @@ func CloseSession(w http.ResponseWriter, r *http.Request) {
 			Path:   "/",
 		}
 		http.SetCookie(w, &cookie)
-
 		err = db.DeleteSession(sessionToken.Value)
 		if err != nil {
 			log.Printf("Failed to delete session from database: %v", err)
 		}
 	}
-
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Logout successful"))
 }

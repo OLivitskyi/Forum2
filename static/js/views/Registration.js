@@ -1,5 +1,4 @@
 import AbstractView from "./AbstractView.js";
-
 export default class extends AbstractView {
     constructor(params) {
         super(params);
@@ -48,19 +47,13 @@ export default class extends AbstractView {
 <p class="form__text">
     <a class="form__link" href="./" id="linkLogin">Already have an account? Sign in</a>
 </p>
-
         </div>
            
 </form>
         `;
     }
 }
-
 // Trying to add error message for @ character 
-
-
-
 console.log("test registration.js")
-
 document.getElementById("submit")
 console.log(document.getElementById("submit"))

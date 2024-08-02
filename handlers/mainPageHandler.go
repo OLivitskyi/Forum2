@@ -18,13 +18,11 @@ func MainPageHandler(w http.ResponseWriter, r *http.Request) {
 		LoginProcess(w, r)
 	}
 }
-
 func SignupHandler(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/registration" {
 		http.Error(w, "Page not found.", http.StatusNotFound)
 		return
 	}
-
 	if r.Method == "GET" {
 		MainPageHandler(w, r)
 		return
@@ -33,7 +31,6 @@ func SignupHandler(w http.ResponseWriter, r *http.Request) {
 		SignupProcess(w, r)
 	}
 }
-
 func HomepageHandler(w http.ResponseWriter, r *http.Request) {
 	if SessionExpired(r) {
 		http.Redirect(w, r, "/", http.StatusFound)
@@ -48,12 +45,10 @@ func HomepageHandler(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/", http.StatusFound)
 		return
 	}
-
 	if r.Method == "GET" {
 		MainPageHandler(w, r)
 	}
 }
-
 func ValidateSessionHandler(w http.ResponseWriter, r *http.Request) {
 	username := ValidateSession(r)
 	if username != "" && !SessionExpired(r) {
@@ -62,18 +57,15 @@ func ValidateSessionHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusUnauthorized)
 	}
 }
-
 func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/logout" {
 		http.Error(w, "Page not found.", http.StatusNotFound)
 		return
 	}
-
 	user := ValidateSession(r)
 	if user != "" {
 		CloseSession(w, r)
 	}
-
 	if r.Header.Get("Accept") == "application/json" {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)

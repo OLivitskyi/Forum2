@@ -32,15 +32,15 @@ func main() {
 	http.HandleFunc("/get-users", handlers.GetUsersHandler)
 
 	// posts and comments
-	http.Handle("/create-category", handlers.RequireLogin(http.HandlerFunc(handlers.CreateCategoryHandler)))
+	http.HandleFunc("/create-category", handlers.CreateCategoryHandler)
 	http.Handle("/create-post", handlers.RequireLogin(http.HandlerFunc(handlers.CreatePostHandler)))
-	http.Handle("/create-comment", handlers.RequireLogin(http.HandlerFunc(handlers.CreateCommentHandler)))
-	http.Handle("/get-posts", handlers.RequireLogin(http.HandlerFunc(handlers.GetPostsHandler)))
-	http.Handle("/get-comments", handlers.RequireLogin(http.HandlerFunc(handlers.GetCommentsHandler)))
+	http.HandleFunc("/create-comment", handlers.CreateCommentHandler)
+	http.HandleFunc("/get-posts", handlers.GetPostsHandler)
+	http.HandleFunc("/get-comments", handlers.GetCommentsHandler)
 
 	// reactions
-	http.Handle("/add-post-reaction", handlers.RequireLogin(http.HandlerFunc(handlers.AddPostReactionHandler)))
-	http.Handle("/add-comment-reaction", handlers.RequireLogin(http.HandlerFunc(handlers.AddCommentReactionHandler)))
+	http.HandleFunc("/add-post-reaction", handlers.AddPostReactionHandler)
+	http.HandleFunc("/add-comment-reaction", handlers.AddCommentReactionHandler)
 
 	handlers.WebSocketHandler()
 

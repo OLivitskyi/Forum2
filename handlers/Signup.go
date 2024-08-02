@@ -16,13 +16,11 @@ func SignupProcess(w http.ResponseWriter, r *http.Request) {
 	age := r.FormValue("age")
 	gender := r.FormValue("gender")
 	password := r.FormValue("signupPassword")
-
 	encryptedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		http.Error(w, "Error hashing password", http.StatusInternalServerError)
 		return
 	}
-
 	data := []interface{}{username, age, gender, firstName, lastName, email, string(encryptedPassword)}
 	_, err = db.RegisterUser(data)
 	if err != nil {
@@ -41,16 +39,13 @@ func LoginProcess(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(err.Error()))
 		return
 	}
-
 	userID, err := db.GetUserIDByUsernameOrEmail(usernameOrEmail)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte("Failed to get user ID"))
 		return
 	}
-
 	NewSession(w, login.Username, userID)
-
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Login successful"))
 }

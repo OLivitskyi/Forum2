@@ -16,7 +16,6 @@ var upgrader = websocket.Upgrader{
 		return true
 	},
 }
-
 var clients = make(map[*websocket.Conn]uuid.UUID)
 var broadcast = make(chan interface{})
 var mutex = &sync.Mutex{}
@@ -35,26 +34,22 @@ func handleConnections(w http.ResponseWriter, r *http.Request) {
 		mutex.Unlock()
 		db.UpdateUserStatus(clients[ws], false)
 	}()
-
 	// Read session token from query parameters
 	sessionToken := r.URL.Query().Get("session_token")
 	if sessionToken == "" {
 		log.Println("Unauthorized access: session token missing")
 		return
 	}
-
 	userID, err := db.GetUserIDFromSession(sessionToken)
 	if err != nil {
 		log.Printf("Unauthorized access: %v", err)
 		return
 	}
-
 	log.Printf("User %s connected", userID)
 	mutex.Lock()
 	clients[ws] = userID
 	mutex.Unlock()
 	db.UpdateUserStatus(userID, true)
-
 	for {
 		var msg interface{}
 		err := ws.ReadJSON(&msg)
@@ -62,28 +57,23 @@ func handleConnections(w http.ResponseWriter, r *http.Request) {
 			log.Printf("Error reading websocket message: %v", err)
 			break
 		}
-
 		switch m := msg.(type) {
 		case db.WebSocketMessage:
 			m.Timestamp = time.Now().Format(time.RFC3339)
 			log.Printf("Received message from user %s: %v", userID, m)
 			broadcast <- m
-
 		case db.ReactionMessage:
 			m.UserID = userID // Ensure the reaction comes from the logged-in user
 			log.Printf("Received reaction from user %s: %v", userID, m)
 			broadcast <- m
-
 		default:
 			log.Printf("Unknown message type: %T", m)
 		}
 	}
 }
-
 func handleMessages() {
 	for {
 		msg := <-broadcast
-
 		switch m := msg.(type) {
 		case db.WebSocketMessage:
 			log.Printf("Broadcasting message: %v", m)
@@ -104,7 +94,6 @@ func handleMessages() {
 					}
 				}
 			}
-
 		case db.ReactionMessage:
 			log.Printf("Broadcasting reaction: %v", m)
 			if m.PostID != uuid.Nil {
@@ -130,13 +119,11 @@ func handleMessages() {
 					mutex.Unlock()
 				}
 			}
-
 		default:
 			log.Printf("Unknown message type: %T", m)
 		}
 	}
 }
-
 func WebSocketHandler() {
 	http.HandleFunc("/ws", handleConnections)
 	go handleMessages()

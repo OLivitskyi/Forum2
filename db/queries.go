@@ -101,7 +101,6 @@ func ConnectDatabase() error {
 	}
 	return nil
 }
-
 func RegisterUser(data []interface{}) ([]User, error) {
 	userList := []User{}
 	if DB == nil {
@@ -113,15 +112,12 @@ func RegisterUser(data []interface{}) ([]User, error) {
 		return nil, err
 	}
 	defer stmt.Close()
-
 	userID, err := uuid.NewV4()
 	if err != nil {
 		log.Println("UUID generation error:", err)
 		return nil, err
 	}
-
 	data = append([]interface{}{userID.String()}, data...)
-
 	_, err = stmt.Exec(data...)
 	if err != nil {
 		log.Println("Exec statement error:", err)
@@ -129,7 +125,6 @@ func RegisterUser(data []interface{}) ([]User, error) {
 	}
 	return userList, nil
 }
-
 func LoginUser(db *sql.DB, usernameOrEmail, password string) (Login, error) {
 	var login Login
 	var fieldname string
@@ -148,24 +143,20 @@ func LoginUser(db *sql.DB, usernameOrEmail, password string) (Login, error) {
 	}
 	return login, nil
 }
-
 func CreatePostDB(db *sql.DB, userID uuid.UUID, subject, content string, categoryIDs []int, createdAt time.Time) error {
 	tx, err := db.Begin()
 	if err != nil {
 		return err
 	}
-
 	postID, err := uuid.NewV4()
 	if err != nil {
 		return err
 	}
-
 	_, err = tx.Exec("INSERT INTO posts (post_id, user_id, subject, content, created_at) VALUES (?, ?, ?, ?, ?)", postID, userID, subject, content, createdAt)
 	if err != nil {
 		tx.Rollback()
 		return err
 	}
-
 	for _, categoryID := range categoryIDs {
 		_, err = tx.Exec("INSERT INTO post_categories (post_id, category_id) VALUES (?, ?)", postID, categoryID)
 		if err != nil {
@@ -173,10 +164,8 @@ func CreatePostDB(db *sql.DB, userID uuid.UUID, subject, content string, categor
 			return err
 		}
 	}
-
 	return tx.Commit()
 }
-
 func GetPosts() ([]Post, error) {
 	rows, err := DB.Query(`
         SELECT p.post_id, p.user_id, p.subject, p.content, p.created_at, 
@@ -190,7 +179,6 @@ func GetPosts() ([]Post, error) {
 		return nil, err
 	}
 	defer rows.Close()
-
 	var posts []Post
 	for rows.Next() {
 		var p Post
@@ -203,24 +191,20 @@ func GetPosts() ([]Post, error) {
 			return nil, err
 		}
 		p.User = user
-
 		categories, err := GetPostCategories(p.ID)
 		if err != nil {
 			return nil, err
 		}
 		p.Categories = convertToCategoryPointers(categories)
-
 		comments, err := GetComments(p.ID)
 		if err != nil {
 			return nil, err
 		}
 		p.Comments = convertToCommentPointers(comments)
-
 		posts = append(posts, p)
 	}
 	return posts, nil
 }
-
 func convertToCategoryPointers(categories []Category) []*Category {
 	var categoryPointers []*Category
 	for i := range categories {
@@ -228,7 +212,6 @@ func convertToCategoryPointers(categories []Category) []*Category {
 	}
 	return categoryPointers
 }
-
 func convertToCommentPointers(comments []Comment) []*Comment {
 	var commentPointers []*Comment
 	for i := range comments {
@@ -236,7 +219,6 @@ func convertToCommentPointers(comments []Comment) []*Comment {
 	}
 	return commentPointers
 }
-
 func GetPostCategories(postID uuid.UUID) ([]Category, error) {
 	rows, err := DB.Query(`
         SELECT c.category_id, c.category
@@ -247,7 +229,6 @@ func GetPostCategories(postID uuid.UUID) ([]Category, error) {
 		return nil, err
 	}
 	defer rows.Close()
-
 	var categories []Category
 	for rows.Next() {
 		var c Category
@@ -259,12 +240,10 @@ func GetPostCategories(postID uuid.UUID) ([]Category, error) {
 	}
 	return categories, nil
 }
-
 func CreateComment(postID, userID uuid.UUID, content string) error {
 	_, err := DB.Exec("INSERT INTO comments (comment_id, post_id, user_id, content, created_at) VALUES (?, ?, ?, ?, ?)", uuid.Must(uuid.NewV4()), postID, userID, content, time.Now())
 	return err
 }
-
 func GetComments(postID uuid.UUID) ([]Comment, error) {
 	rows, err := DB.Query(`
         SELECT c.comment_id, c.user_id, u.username, c.content, c.created_at,
@@ -280,7 +259,6 @@ func GetComments(postID uuid.UUID) ([]Comment, error) {
 		return nil, err
 	}
 	defer rows.Close()
-
 	var comments []Comment
 	for rows.Next() {
 		var c Comment
@@ -293,12 +271,10 @@ func GetComments(postID uuid.UUID) ([]Comment, error) {
 			return nil, err
 		}
 		c.User = user
-
 		comments = append(comments, c)
 	}
 	return comments, nil
 }
-
 func GetUserByID(userID uuid.UUID) (*User, error) {
 	var user User
 	err := DB.QueryRow("SELECT user_id, username, firstname, lastname, age, gender, email FROM users WHERE user_id = ?", userID).Scan(
@@ -308,19 +284,16 @@ func GetUserByID(userID uuid.UUID) (*User, error) {
 	}
 	return &user, nil
 }
-
 func CreateCategory(name string) error {
 	_, err := DB.Exec("INSERT INTO categories (category) VALUES (?)", name)
 	return err
 }
-
 func GetCategories() ([]Category, error) {
 	rows, err := DB.Query("SELECT category_id, category FROM categories")
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-
 	var categories []Category
 	for rows.Next() {
 		var c Category
@@ -332,7 +305,6 @@ func GetCategories() ([]Category, error) {
 	}
 	return categories, nil
 }
-
 func AddMessage(senderID, receiverID uuid.UUID, content string) error {
 	if DB == nil {
 		return fmt.Errorf("db connection failed")
@@ -352,7 +324,6 @@ func AddMessage(senderID, receiverID uuid.UUID, content string) error {
 	}
 	return nil
 }
-
 func GetMessages(senderID, receiverID uuid.UUID, limit, offset int) ([]Message, error) {
 	if DB == nil {
 		return nil, fmt.Errorf("db connection failed")
@@ -373,7 +344,6 @@ func GetMessages(senderID, receiverID uuid.UUID, limit, offset int) ([]Message, 
 	}
 	return messages, nil
 }
-
 func UpdateUserStatus(userID uuid.UUID, isOnline bool) error {
 	if DB == nil {
 		return fmt.Errorf("db connection failed")
@@ -389,7 +359,6 @@ func UpdateUserStatus(userID uuid.UUID, isOnline bool) error {
 	}
 	return nil
 }
-
 func GetUserStatus() ([]UserStatus, error) {
 	if DB == nil {
 		return nil, fmt.Errorf("db connection failed")
@@ -410,7 +379,6 @@ func GetUserStatus() ([]UserStatus, error) {
 	}
 	return statuses, nil
 }
-
 func GetUsersOrderedByLastMessageOrAlphabetically() ([]User, error) {
 	if DB == nil {
 		return nil, fmt.Errorf("db connection failed")
@@ -437,7 +405,6 @@ func GetUsersOrderedByLastMessageOrAlphabetically() ([]User, error) {
 	}
 	return users, nil
 }
-
 func GetUserIDFromSession(token string) (uuid.UUID, error) {
 	if DB == nil {
 		return uuid.Nil, fmt.Errorf("db connection failed")
@@ -451,7 +418,6 @@ func GetUserIDFromSession(token string) (uuid.UUID, error) {
 	log.Printf("Session token found for user ID: %d", userID)
 	return userID, nil
 }
-
 func MarkMessageAsRead(messageID uuid.UUID, userID uuid.UUID) error {
 	if DB == nil {
 		return fmt.Errorf("db connection failed")
@@ -467,7 +433,6 @@ func MarkMessageAsRead(messageID uuid.UUID, userID uuid.UUID) error {
 	}
 	return nil
 }
-
 func SaveSession(token string, userID uuid.UUID, expiration time.Time) error {
 	if DB == nil {
 		return fmt.Errorf("db connection failed")
@@ -483,7 +448,6 @@ func SaveSession(token string, userID uuid.UUID, expiration time.Time) error {
 	}
 	return nil
 }
-
 func DeleteSession(token string) error {
 	if DB == nil {
 		return fmt.Errorf("db connection failed")
@@ -499,7 +463,6 @@ func DeleteSession(token string) error {
 	}
 	return nil
 }
-
 func GetUserID(usernameOrEmail string, db *sql.DB) (uuid.UUID, error) {
 	var userID uuid.UUID
 	var fieldname string
@@ -520,19 +483,16 @@ func AddPostReaction(userID, postID uuid.UUID, reactionType ReactionType) error 
 	_, err := DB.Exec("INSERT INTO likes (user_id, post_id, type, created_at) VALUES (?, ?, ?, ?)", userID, postID, reactionType, time.Now())
 	return err
 }
-
 func AddCommentReaction(userID, commentID uuid.UUID, reactionType ReactionType) error {
 	_, err := DB.Exec("INSERT INTO likes (user_id, comment_id, type, created_at) VALUES (?, ?, ?, ?)", userID, commentID, reactionType, time.Now())
 	return err
 }
-
 func GetPostReactions(postID uuid.UUID) ([]Reaction, error) {
 	rows, err := DB.Query("SELECT user_id, post_id, type FROM likes WHERE post_id = ?", postID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-
 	var reactions []Reaction
 	for rows.Next() {
 		var r Reaction
@@ -544,14 +504,12 @@ func GetPostReactions(postID uuid.UUID) ([]Reaction, error) {
 	}
 	return reactions, nil
 }
-
 func GetCommentReactions(commentID uuid.UUID) ([]Reaction, error) {
 	rows, err := DB.Query("SELECT user_id, comment_id, type FROM likes WHERE comment_id = ?", commentID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-
 	var reactions []Reaction
 	for rows.Next() {
 		var r Reaction
@@ -563,7 +521,6 @@ func GetCommentReactions(commentID uuid.UUID) ([]Reaction, error) {
 	}
 	return reactions, nil
 }
-
 func GetUserIDByUsernameOrEmail(usernameOrEmail string) (uuid.UUID, error) {
 	var userID uuid.UUID
 	var fieldname string
