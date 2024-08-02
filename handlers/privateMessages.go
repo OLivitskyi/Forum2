@@ -10,14 +10,6 @@ import (
 	"github.com/gofrs/uuid"
 )
 
-func getUserIDFromSession(r *http.Request) (uuid.UUID, error) {
-	cookie, err := r.Cookie("session_token")
-	if err != nil {
-		return uuid.Nil, err
-	}
-	sessionToken := cookie.Value
-	return db.GetUserIDFromSession(sessionToken)
-}
 func SendMessageHandler(w http.ResponseWriter, r *http.Request) {
 	senderID, err := getUserIDFromSession(r)
 	if err != nil {

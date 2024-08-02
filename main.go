@@ -14,12 +14,10 @@ func main() {
 		fmt.Println("failed to connect to database in main.go")
 		log.Fatal(err)
 	}
-
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 	http.HandleFunc("/registration", handlers.SignupHandler)
 	http.HandleFunc("/", handlers.MainPageHandler)
 	http.HandleFunc("/logout", handlers.LogoutHandler)
-
 	http.HandleFunc("/homepage", handlers.HomepageHandler)
 	http.HandleFunc("/validate-session", handlers.ValidateSessionHandler)
 
@@ -32,15 +30,15 @@ func main() {
 	http.HandleFunc("/get-users", handlers.GetUsersHandler)
 
 	// posts and comments
-	http.HandleFunc("/create-category", handlers.CreateCategoryHandler)
+	http.Handle("/create-category", handlers.RequireLogin(http.HandlerFunc(handlers.CreateCategoryHandler)))
 	http.Handle("/create-post", handlers.RequireLogin(http.HandlerFunc(handlers.CreatePostHandler)))
-	http.HandleFunc("/create-comment", handlers.CreateCommentHandler)
-	http.HandleFunc("/get-posts", handlers.GetPostsHandler)
-	http.HandleFunc("/get-comments", handlers.GetCommentsHandler)
+	http.Handle("/create-comment", handlers.RequireLogin(http.HandlerFunc(handlers.CreateCommentHandler)))
+	http.Handle("/get-posts", handlers.RequireLogin(http.HandlerFunc(handlers.GetPostsHandler)))
+	http.Handle("/get-comments", handlers.RequireLogin(http.HandlerFunc(handlers.GetCommentsHandler)))
 
 	// reactions
-	http.HandleFunc("/add-post-reaction", handlers.AddPostReactionHandler)
-	http.HandleFunc("/add-comment-reaction", handlers.AddCommentReactionHandler)
+	http.Handle("/add-post-reaction", handlers.RequireLogin(http.HandlerFunc(handlers.AddPostReactionHandler)))
+	http.Handle("/add-comment-reaction", handlers.RequireLogin(http.HandlerFunc(handlers.AddCommentReactionHandler)))
 
 	handlers.WebSocketHandler()
 

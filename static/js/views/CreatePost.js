@@ -30,11 +30,11 @@ export default class extends AbstractView {
             <h3>Messages</h3>
             <span class="message-count">26</span>
           </a>
-          <a href="create-post" id="create-post">
+          <a href="create-post" id="create-post" data-link>
             <span class="material-icons-sharp">add</span>
             <h3>Create Post</h3>
           </a>
-          <a href="#">
+          <a href="logout">
             <span class="material-icons-sharp" type= "submit">logout</span>
             <h3>Logout</h3>
           </a>

@@ -415,7 +415,7 @@ func GetUserIDFromSession(token string) (uuid.UUID, error) {
 		log.Printf("Error finding session token: %v", err)
 		return uuid.Nil, err
 	}
-	log.Printf("Session token found for user ID: %d", userID)
+	log.Printf("Session token found for user ID: %s", userID)
 	return userID, nil
 }
 func MarkMessageAsRead(messageID uuid.UUID, userID uuid.UUID) error {

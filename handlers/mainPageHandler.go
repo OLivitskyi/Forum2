@@ -18,6 +18,7 @@ func MainPageHandler(w http.ResponseWriter, r *http.Request) {
 		LoginProcess(w, r)
 	}
 }
+
 func SignupHandler(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/registration" {
 		http.Error(w, "Page not found.", http.StatusNotFound)
@@ -31,6 +32,7 @@ func SignupHandler(w http.ResponseWriter, r *http.Request) {
 		SignupProcess(w, r)
 	}
 }
+
 func HomepageHandler(w http.ResponseWriter, r *http.Request) {
 	if SessionExpired(r) {
 		http.Redirect(w, r, "/", http.StatusFound)
@@ -49,6 +51,7 @@ func HomepageHandler(w http.ResponseWriter, r *http.Request) {
 		MainPageHandler(w, r)
 	}
 }
+
 func ValidateSessionHandler(w http.ResponseWriter, r *http.Request) {
 	username := ValidateSession(r)
 	if username != "" && !SessionExpired(r) {
@@ -57,6 +60,7 @@ func ValidateSessionHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusUnauthorized)
 	}
 }
+
 func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/logout" {
 		http.Error(w, "Page not found.", http.StatusNotFound)
