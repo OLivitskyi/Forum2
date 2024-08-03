@@ -53,7 +53,6 @@ func LoginProcess(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Failed to create session"))
 		return
 	}
-	// Встановлюємо cookie з токеном сесії
 	http.SetCookie(w, &http.Cookie{
 		Name:    "session_token",
 		Value:   token,

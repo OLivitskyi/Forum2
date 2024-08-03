@@ -9,13 +9,7 @@ import (
 	"github.com/gofrs/uuid"
 )
 
-type Session struct {
-	Username     string
-	sessionToken string
-	expireTime   time.Time
-}
-
-var sessions = map[string]Session{}
+var sessions = map[string]db.Session{}
 
 // NewSession creates a new session for the user
 func NewSession(w http.ResponseWriter, username string, userID uuid.UUID) (string, error) {
@@ -27,16 +21,16 @@ func NewSession(w http.ResponseWriter, username string, userID uuid.UUID) (strin
 		log.Fatalf("Failed to generate UUID: %v", err)
 		return "", err
 	}
-	session := Session{
+	session := db.Session{
 		Username:     username,
-		sessionToken: token.String(),
-		expireTime:   time.Now().Add(100 * time.Minute),
+		SessionToken: token.String(),
+		ExpireTime:   time.Now().Add(100 * time.Minute),
 	}
 	sessions[token.String()] = session
 	expiration := time.Now().Add(4 * time.Hour)
 	cookie := http.Cookie{
 		Name:     "session_token",
-		Value:    session.sessionToken,
+		Value:    session.SessionToken,
 		Expires:  expiration,
 		Path:     "/",
 		HttpOnly: true,
@@ -86,7 +80,7 @@ func SessionExpired(r *http.Request) bool {
 	}
 	key, ok := sessions[token]
 	if ok {
-		return key.expireTime.Before(time.Now())
+		return key.ExpireTime.Before(time.Now())
 	}
 	return true
 }

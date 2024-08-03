@@ -10,20 +10,40 @@ import (
 	"github.com/gofrs/uuid"
 )
 
+// SendMessageHandler handles sending a message
 func SendMessageHandler(w http.ResponseWriter, r *http.Request) {
 	senderID, err := getUserIDFromSession(r)
 	if err != nil {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
-	receiverID, err := uuid.FromString(r.FormValue("receiver_id"))
+
+	// Перевірка заголовка Content-Type
+	if r.Header.Get("Content-Type") != "application/json" {
+		http.Error(w, "Content-Type must be application/json", http.StatusUnsupportedMediaType)
+		return
+	}
+
+	var requestData struct {
+		ReceiverID string `json:"receiver_id"`
+		Content    string `json:"content"`
+	}
+
+	// Розбір JSON-запиту
+	err = json.NewDecoder(r.Body).Decode(&requestData)
+	if err != nil {
+		http.Error(w, "Invalid JSON data", http.StatusBadRequest)
+		return
+	}
+
+	receiverID, err := uuid.FromString(requestData.ReceiverID)
 	if err != nil {
 		log.Println("Invalid receiver ID:", err)
 		http.Error(w, "Invalid receiver ID", http.StatusBadRequest)
 		return
 	}
-	content := r.FormValue("content")
-	err = db.AddMessage(senderID, receiverID, content)
+
+	err = db.AddMessage(senderID, receiverID, requestData.Content)
 	if err != nil {
 		log.Println("Failed to send message:", err)
 		http.Error(w, "Failed to send message", http.StatusInternalServerError)
@@ -31,43 +51,67 @@ func SendMessageHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	w.WriteHeader(http.StatusOK)
 }
+
+// GetMessagesHandler handles fetching messages
 func GetMessagesHandler(w http.ResponseWriter, r *http.Request) {
 	userID, err := getUserIDFromSession(r)
 	if err != nil {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
+
 	otherUserID, err := uuid.FromString(r.URL.Query().Get("user_id"))
 	if err != nil {
 		log.Println("Invalid user ID:", err)
 		http.Error(w, "Invalid user ID", http.StatusBadRequest)
 		return
 	}
+
 	limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
 	if err != nil {
 		limit = 10
 	}
+
 	offset, err := strconv.Atoi(r.URL.Query().Get("offset"))
 	if err != nil {
 		offset = 0
 	}
+
 	messages, err := db.GetMessages(userID, otherUserID, limit, offset)
 	if err != nil {
 		log.Println("Failed to get messages:", err)
 		http.Error(w, "Failed to get messages", http.StatusInternalServerError)
 		return
 	}
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(messages)
 }
+
+// UpdateStatusHandler handles updating user status
 func UpdateStatusHandler(w http.ResponseWriter, r *http.Request) {
 	userID, err := getUserIDFromSession(r)
 	if err != nil {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
-	isOnline := r.FormValue("is_online") == "true"
-	err = db.UpdateUserStatus(userID, isOnline)
+
+	if r.Header.Get("Content-Type") != "application/json" {
+		http.Error(w, "Content-Type must be application/json", http.StatusUnsupportedMediaType)
+		return
+	}
+
+	var requestData struct {
+		IsOnline bool `json:"is_online"`
+	}
+
+	err = json.NewDecoder(r.Body).Decode(&requestData)
+	if err != nil {
+		http.Error(w, "Invalid JSON data", http.StatusBadRequest)
+		return
+	}
+
+	err = db.UpdateUserStatus(userID, requestData.IsOnline)
 	if err != nil {
 		log.Println("Failed to update status:", err)
 		http.Error(w, "Failed to update status", http.StatusInternalServerError)
@@ -75,6 +119,8 @@ func UpdateStatusHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	w.WriteHeader(http.StatusOK)
 }
+
+// GetUserStatusHandler handles fetching user statuses
 func GetUserStatusHandler(w http.ResponseWriter, r *http.Request) {
 	statuses, err := db.GetUserStatus()
 	if err != nil {
@@ -85,17 +131,36 @@ func GetUserStatusHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(statuses)
 }
+
+// MarkMessageAsReadHandler handles marking a message as read
 func MarkMessageAsReadHandler(w http.ResponseWriter, r *http.Request) {
 	userID, err := getUserIDFromSession(r)
 	if err != nil {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
-	messageID, err := uuid.FromString(r.FormValue("message_id"))
+
+	if r.Header.Get("Content-Type") != "application/json" {
+		http.Error(w, "Content-Type must be application/json", http.StatusUnsupportedMediaType)
+		return
+	}
+
+	var requestData struct {
+		MessageID string `json:"message_id"`
+	}
+
+	err = json.NewDecoder(r.Body).Decode(&requestData)
+	if err != nil {
+		http.Error(w, "Invalid JSON data", http.StatusBadRequest)
+		return
+	}
+
+	messageID, err := uuid.FromString(requestData.MessageID)
 	if err != nil {
 		http.Error(w, "Invalid message ID", http.StatusBadRequest)
 		return
 	}
+
 	err = db.MarkMessageAsRead(messageID, userID)
 	if err != nil {
 		http.Error(w, "Failed to mark message as read", http.StatusInternalServerError)
@@ -103,6 +168,8 @@ func MarkMessageAsReadHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	w.WriteHeader(http.StatusOK)
 }
+
+// GetUsersHandler handles fetching users
 func GetUsersHandler(w http.ResponseWriter, r *http.Request) {
 	users, err := db.GetUsersOrderedByLastMessageOrAlphabetically()
 	if err != nil {

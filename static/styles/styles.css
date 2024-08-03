@@ -11,39 +11,30 @@ body {
     align-items: center;
     justify-content: center;
     font-size: 18px; 
+    font-family: 'Quicksand', sans-serif;
+    background-color: #f4f4f9;
+    color: #333;
 }
 
 .container-login {
     width: 400px;
-    max-width: 400px;
+    max-width: 100%;
     margin: 1rem;
     padding: 2rem;
-    box-shadow: 0 0 40px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
     border-radius: var(--border-radius);
     background: #ffffff;
-}
-
-.container,
-.form__input,
-.form__button {
-    font: 500 1rem 'Quicksand', sans-serif;
 }
 
 .form--hidden {
     display: none;
 }
 
-.form > *:first-child {
-    margin-top: 0;
-}
-
-.form > *:last-child {
-    margin-bottom: 0;
-}
-
 .form__title {
     margin-bottom: 2rem;
     text-align: center;
+    font-size: 1.5rem;
+    color: var(--color-secondary);
 }
 
 .form__message {
@@ -73,6 +64,7 @@ body {
     outline: none;
     background: #eeeeee;
     transition: background 0.2s, border-color 0.2s;
+    font-size: 1rem;
 }
 
 .form__input:focus {
@@ -93,7 +85,7 @@ body {
 
 .form__button {
     width: 100%;
-    padding: 1rem 5rem;
+    padding: 1rem 0;
     font-weight: bold;
     font-size: 1.1rem;
     color: #ffffff;
@@ -102,7 +94,8 @@ body {
     outline: none;
     cursor: pointer;
     background: var(--color-primary);
-    margin-bottom: 30px;
+    margin-bottom: 1rem;
+    transition: background 0.2s;
 }
 
 .form__button:hover {
@@ -115,39 +108,45 @@ body {
 
 .form__text {
     text-align: center;
+    font-size: 0.9rem;
+    color: var(--color-secondary);
 }
 
 .form__link {
     color: var(--color-secondary);
     text-decoration: none;
     cursor: pointer;
-    line-height: 30px;
+    line-height: 1.5;
 }
 
 .form__link:hover {
     text-decoration: underline;
 }
 
-.create-post-container {
+.create-post-container,
+.create-category-container {
     display: flex;
     flex-direction: column;
     align-items: center;
 }
 
 .create-post-container .post-title,
-.create-post-container .post-subject {
+.create-post-container .post-subject,
+.create-category-container .form__input {
     width: 100%;
     max-width: 600px;
     margin-bottom: 15px;
 }
 
-.create-post-container .categories {
+.create-post-container .categories,
+.create-category-container .form__input {
     width: 100%;
     max-width: 600px;
     margin-bottom: 15px;
 }
 
-.create-post-container .pill-submit {
+.create-post-container .pill-submit,
+.create-category-container .pill-submit {
     max-width: 600px;
 }
 

@@ -22,7 +22,6 @@ export default class extends AbstractView {
                             <option value="">Select a category</option>
                         </select>
                     </div>
-                    <div id="category-message" class="form__message"></div>
                     <button class="pill pill-submit" type="submit">POST</button>
                 </div>
             </form>

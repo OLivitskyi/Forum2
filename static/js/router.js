@@ -5,7 +5,7 @@ import CreatePost from "./views/CreatePost.js";
 import Messages from "./views/Messages.js";
 import CreatePostCategory from "./views/CreatePostCategory.js";
 import { isAuthenticated } from './auth.js';
-import { handleLoginFormSubmit, handleLogout, handleCreatePostFormSubmit } from './eventHandlers.js';
+import { handleLoginFormSubmit, handleLogout, handleCreatePostFormSubmit, setupMessageForm, handleCreateCategoryFormSubmit } from './eventHandlers.js';
 import { showError, clearError } from './errorHandler.js';
 import { setInputError, clearInputError, setupFormSwitching, setupFormValidation } from './formHandler.js';
 
@@ -77,6 +77,8 @@ export const router = async () => {
     setupFormSwitching();
     setupFormValidation();
     handleCreatePostFormSubmit(clearError, showError);
+    handleCreateCategoryFormSubmit(clearError, showError);
+    setupMessageForm();
 
     // Toggle category selection for post creation
     document.querySelectorAll(".pill").forEach(pill => {

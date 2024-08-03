@@ -1,29 +1,21 @@
 import AbstractView from "./AbstractView.js";
 import { getLayoutHtml } from "./layout.js";
-import { handleCreatePostFormSubmit, loadCategories } from "../eventHandlers.js";
+import { handleCreateCategoryFormSubmit, loadCategories } from "../eventHandlers.js";
 
 export default class extends AbstractView {
     constructor(params) {
         super(params);
-        this.setTitle("CreatePost");
+        this.setTitle("Create Category");
     }
 
     async getHtml() {
         const content = `
-            <form class="form" id="create-post-form">
-                <h1>Create a post</h1>
-                <div class="date"></div>
-                <div class="insights"></div>
-                <div class="create-post-container">
-                    <input type="text" id="title" name="post-title" class="post-title" placeholder="Title of your post">
-                    <textarea id="content" name="post-content" class="post-subject" placeholder="Write a post"></textarea>
-                    <div class="categories">
-                        <select id="category-select" class="form__input">
-                            <option value="">Select a category</option>
-                        </select>
-                    </div>
+            <form class="form" id="create-category-form">
+                <h1>Create a Category</h1>
+                <div class="create-category-container">
+                    <input type="text" id="category-name" name="category-name" class="form__input" placeholder="Category name">
+                    <button class="pill pill-submit" id="create-category-button" type="submit">CREATE</button>
                     <div id="category-message" class="form__message"></div>
-                    <button class="pill pill-submit" type="submit">POST</button>
                 </div>
             </form>
         `;
@@ -32,6 +24,6 @@ export default class extends AbstractView {
 
     async postRender() {
         await loadCategories();
-        handleCreatePostFormSubmit();
+        handleCreateCategoryFormSubmit(clearError, showError);
     }
 }

@@ -1,21 +1,28 @@
 // Function to set a form message (success or error)
-// Function to set a form message (success or error)
 export const setFormMessage = (messageElement, type, message) => {
-    messageElement.textContent = message;
-    messageElement.classList.remove("form__message--success", "form__message--error");
-    messageElement.classList.add(`form__message--${type}`);
+    if (messageElement) {
+        messageElement.textContent = message;
+        messageElement.classList.remove("form__message--success", "form__message--error");
+        messageElement.classList.add(`form__message--${type}`);
+    }
 };
 
 // Function to set input error message
 export const setInputError = (inputElement, message) => {
     inputElement.classList.add("form__input--error");
-    inputElement.parentElement.querySelector(".form__input-error-message").textContent = message;
+    const errorMessageElement = inputElement.parentElement.querySelector(".form__input-error-message");
+    if (errorMessageElement) {
+        errorMessageElement.textContent = message;
+    }
 };
 
 // Function to clear input error message
 export const clearInputError = (inputElement) => {
     inputElement.classList.remove("form__input--error");
-    inputElement.parentElement.querySelector(".form__input-error-message").textContent = "";
+    const errorMessageElement = inputElement.parentElement.querySelector(".form__input-error-message");
+    if (errorMessageElement) {
+        errorMessageElement.textContent = "";
+    }
 };
 
 // Function to handle switching between login and create account forms
@@ -56,4 +63,12 @@ export const setupFormValidation = () => {
             clearInputError(inputElement);
         });
     });
+
+    // Adding event listener for category-select
+    const categorySelect = document.getElementById("category-select");
+    if (categorySelect) {
+        categorySelect.addEventListener("change", e => {
+            clearInputError(categorySelect);
+        });
+    }
 };

@@ -63,7 +63,7 @@ func handleConnections(w http.ResponseWriter, r *http.Request) {
 			log.Printf("Received message from user %s: %v", userID, m)
 			broadcast <- m
 		case db.ReactionMessage:
-			m.UserID = userID // Ensure the reaction comes from the logged-in user
+			m.UserID = userID
 			log.Printf("Received reaction from user %s: %v", userID, m)
 			broadcast <- m
 		default:
@@ -71,6 +71,7 @@ func handleConnections(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 }
+
 func handleMessages() {
 	for {
 		msg := <-broadcast
@@ -124,6 +125,7 @@ func handleMessages() {
 		}
 	}
 }
+
 func WebSocketHandler() {
 	http.HandleFunc("/ws", handleConnections)
 	go handleMessages()
