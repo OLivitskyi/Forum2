@@ -18,13 +18,14 @@ type Session struct {
 var sessions = map[string]Session{}
 
 // NewSession creates a new session for the user
-func NewSession(w http.ResponseWriter, username string, userID uuid.UUID) {
+func NewSession(w http.ResponseWriter, username string, userID uuid.UUID) (string, error) {
 	if isSessionUp(username) {
-		return
+		return "", nil
 	}
 	token, err := uuid.NewV4()
 	if err != nil {
 		log.Fatalf("Failed to generate UUID: %v", err)
+		return "", err
 	}
 	session := Session{
 		Username:     username,
@@ -44,8 +45,10 @@ func NewSession(w http.ResponseWriter, username string, userID uuid.UUID) {
 	err = db.SaveSession(token.String(), userID, expiration)
 	if err != nil {
 		log.Fatalf("Failed to save session to database: %v", err)
+		return "", err
 	}
 	log.Printf("New session created for user %s with token %s", username, token.String())
+	return token.String(), nil
 }
 
 // isSessionUp checks if a session is active for the user
@@ -100,7 +103,7 @@ func CloseSession(w http.ResponseWriter, r *http.Request) {
 	if ok {
 		delete(sessions, token)
 		cookie := http.Cookie{
-			Name:   "session",
+			Name:   "session_token",
 			Value:  "",
 			MaxAge: -1,
 			Path:   "/",
@@ -119,12 +122,12 @@ func CloseSession(w http.ResponseWriter, r *http.Request) {
 func RequireLogin(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if SessionExpired(r) {
-			http.Redirect(w, r, "/", http.StatusFound)
+			http.Error(w, "Session expired", http.StatusUnauthorized)
 			return
 		}
 		username := ValidateSession(r)
 		if username == "" {
-			http.Redirect(w, r, "/", http.StatusFound)
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
 		next.ServeHTTP(w, r)

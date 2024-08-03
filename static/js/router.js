@@ -3,6 +3,7 @@ import Login from "./views/Login.js";
 import Registration from "./views/Registration.js";
 import CreatePost from "./views/CreatePost.js";
 import Messages from "./views/Messages.js";
+import CreatePostCategory from "./views/CreatePostCategory.js";
 import { isAuthenticated } from './auth.js';
 import { handleLoginFormSubmit, handleLogout, handleCreatePostFormSubmit } from './eventHandlers.js';
 import { showError, clearError } from './errorHandler.js';
@@ -34,7 +35,8 @@ export const router = async () => {
         { path: "/homepage", view: Homepage, protected: true },
         { path: "/logout", view: Login },
         { path: "/create-post", view: CreatePost, protected: true },
-        { path: "/messages", view: Messages, protected: true }
+        { path: "/messages", view: Messages, protected: true },
+        { path: "/create-category", view: CreatePostCategory, protected: true }
     ];
     
     // Find the matching route

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"forum/db"
 	"net/http"
+	"time"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -30,6 +31,7 @@ func SignupProcess(w http.ResponseWriter, r *http.Request) {
 	}
 	fmt.Fprintf(w, "User created successfully!")
 }
+
 func LoginProcess(w http.ResponseWriter, r *http.Request) {
 	usernameOrEmail := r.FormValue("username")
 	password := r.FormValue("password")
@@ -45,7 +47,18 @@ func LoginProcess(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Failed to get user ID"))
 		return
 	}
-	NewSession(w, login.Username, userID)
+	token, err := NewSession(w, login.Username, userID)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("Failed to create session"))
+		return
+	}
+	// Встановлюємо cookie з токеном сесії
+	http.SetCookie(w, &http.Cookie{
+		Name:    "session_token",
+		Value:   token,
+		Expires: time.Now().Add(24 * time.Hour),
+	})
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Login successful"))
 }

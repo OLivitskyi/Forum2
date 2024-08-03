@@ -25,6 +25,10 @@ export const getLayoutHtml = (content) => {
                         <span class="material-icons-sharp">add</span>
                         <h3>Create Post</h3>
                     </a>
+                    <a href="create-category" data-link>
+                        <span class="material-icons-sharp">category</span>
+                        <h3>Create Category</h3>
+                    </a>
                     <a href="#" id="logout">
                         <span class="material-icons-sharp">logout</span>
                         <h3>Logout</h3>

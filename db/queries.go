@@ -535,3 +535,13 @@ func GetUserIDByUsernameOrEmail(usernameOrEmail string) (uuid.UUID, error) {
 	}
 	return userID, nil
 }
+
+// GetCategoryByID returns a category by its ID
+func GetCategoryByID(id int) (*Category, error) {
+	var category Category
+	err := DB.QueryRow("SELECT category_id, category FROM categories WHERE category_id = ?", id).Scan(&category.ID, &category.Name)
+	if err != nil {
+		return nil, err
+	}
+	return &category, nil
+}

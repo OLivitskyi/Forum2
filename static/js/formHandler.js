@@ -1,6 +1,6 @@
 // Function to set a form message (success or error)
-export const setFormMessage = (formElement, type, message) => {
-    const messageElement = formElement.querySelector(".form__message");
+// Function to set a form message (success or error)
+export const setFormMessage = (messageElement, type, message) => {
     messageElement.textContent = message;
     messageElement.classList.remove("form__message--success", "form__message--error");
     messageElement.classList.add(`form__message--${type}`);

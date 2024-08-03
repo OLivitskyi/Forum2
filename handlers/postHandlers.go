@@ -10,25 +10,6 @@ import (
 	"github.com/gofrs/uuid"
 )
 
-// CreateCategoryHandler handles category creation
-func CreateCategoryHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
-		return
-	}
-	categoryName := r.FormValue("name")
-	if categoryName == "" {
-		http.Error(w, "Category name is required", http.StatusBadRequest)
-		return
-	}
-	err := db.CreateCategory(categoryName)
-	if err != nil {
-		http.Error(w, "Failed to create category", http.StatusInternalServerError)
-		return
-	}
-	w.WriteHeader(http.StatusCreated)
-}
-
 // CreatePostHandler handles post creation
 func CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 	userID, err := getUserIDFromSession(r)
