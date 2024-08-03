@@ -22,23 +22,23 @@ func main() {
 	http.HandleFunc("/validate-session", handlers.ValidateSessionHandler)
 
 	// messages
-	http.HandleFunc("/send-message", handlers.SendMessageHandler)
-	http.HandleFunc("/get-messages", handlers.GetMessagesHandler)
-	http.HandleFunc("/update-status", handlers.UpdateStatusHandler)
-	http.HandleFunc("/get-user-status", handlers.GetUserStatusHandler)
-	http.HandleFunc("/mark-message-read", handlers.MarkMessageAsReadHandler)
-	http.HandleFunc("/get-users", handlers.GetUsersHandler)
+	http.HandleFunc("/api/send-message", handlers.SendMessageHandler)
+	http.HandleFunc("/api/get-messages", handlers.GetMessagesHandler)
+	http.HandleFunc("/api/update-status", handlers.UpdateStatusHandler)
+	http.HandleFunc("/api/get-user-status", handlers.GetUserStatusHandler)
+	http.HandleFunc("/api/mark-message-read", handlers.MarkMessageAsReadHandler)
+	http.HandleFunc("/api/get-users", handlers.GetUsersHandler)
 
 	// posts and comments
-	http.Handle("/create-category", handlers.RequireLogin(http.HandlerFunc(handlers.CreateCategoryHandler)))
-	http.Handle("/api/create-post", handlers.RequireLogin(http.HandlerFunc(handlers.CreatePostHandler))) // змінено шлях для API
-	http.Handle("/create-comment", handlers.RequireLogin(http.HandlerFunc(handlers.CreateCommentHandler)))
-	http.Handle("/get-posts", handlers.RequireLogin(http.HandlerFunc(handlers.GetPostsHandler)))
-	http.Handle("/get-comments", handlers.RequireLogin(http.HandlerFunc(handlers.GetCommentsHandler)))
+	http.Handle("/api/create-category", handlers.RequireLogin(http.HandlerFunc(handlers.CreateCategoryHandler)))
+	http.Handle("/api/create-post", handlers.RequireLogin(http.HandlerFunc(handlers.CreatePostHandler)))
+	http.Handle("/api/create-comment", handlers.RequireLogin(http.HandlerFunc(handlers.CreateCommentHandler)))
+	http.Handle("/api/get-posts", handlers.RequireLogin(http.HandlerFunc(handlers.GetPostsHandler)))
+	http.Handle("/api/get-comments", handlers.RequireLogin(http.HandlerFunc(handlers.GetCommentsHandler)))
 
 	// reactions
-	http.Handle("/add-post-reaction", handlers.RequireLogin(http.HandlerFunc(handlers.AddPostReactionHandler)))
-	http.Handle("/add-comment-reaction", handlers.RequireLogin(http.HandlerFunc(handlers.AddCommentReactionHandler)))
+	http.Handle("/api/add-post-reaction", handlers.RequireLogin(http.HandlerFunc(handlers.AddPostReactionHandler)))
+	http.Handle("/api/add-comment-reaction", handlers.RequireLogin(http.HandlerFunc(handlers.AddCommentReactionHandler)))
 
 	handlers.WebSocketHandler()
 

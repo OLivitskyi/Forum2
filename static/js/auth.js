@@ -27,13 +27,13 @@ export const sendRequest = async (url, method, body = null) => {
 
 // Function to check if the user is authenticated
 export const isAuthenticated = async () => {
-    const response = await sendRequest("/validate-session", "GET");
+    const response = await sendRequest("/api/validate-session", "GET");
     return response.status === 200;
 };
 
 // Function to logout the user and redirect to login page
 export const logout = async () => {
-    const response = await sendRequest("/logout", "GET");
+    const response = await sendRequest("/api/logout", "GET");
     if (response.ok) {
         navigateTo("/");
     } else {

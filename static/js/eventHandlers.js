@@ -10,7 +10,7 @@ export const handleLoginFormSubmit = (clearError, showError) => {
             clearError();
 
             const formData = new FormData(e.target);
-            const response = await fetch("/", {
+            const response = await fetch("/api/login", {
                 method: "POST",
                 body: formData,
             });
@@ -37,7 +37,7 @@ export const handleLogout = () => {
 };
 
 export const handleCreatePostFormSubmit = (clearError, showError) => {
-    const form = document.getElementById("create-post-form"); // Ensure this ID matches the form in CreatePost.js
+    const form = document.getElementById("create-post-form");
     if (form) {
         form.addEventListener("submit", async (e) => {
             e.preventDefault();
