@@ -37,7 +37,7 @@ export const handleLogout = () => {
 };
 
 export const handleCreatePostFormSubmit = (clearError, showError) => {
-    const form = document.getElementById("create-post-form");
+    const form = document.getElementById("create-post-form"); // Ensure this ID matches the form in CreatePost.js
     if (form) {
         form.addEventListener("submit", async (e) => {
             e.preventDefault();
@@ -59,7 +59,7 @@ export const handleCreatePostFormSubmit = (clearError, showError) => {
             };
 
             try {
-                const response = await sendRequest("/create-post", "POST", body);
+                const response = await sendRequest("/api/create-post", "POST", body);
 
                 if (response.ok) {
                     clearError();

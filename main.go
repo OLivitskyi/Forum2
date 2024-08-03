@@ -31,7 +31,7 @@ func main() {
 
 	// posts and comments
 	http.Handle("/create-category", handlers.RequireLogin(http.HandlerFunc(handlers.CreateCategoryHandler)))
-	http.Handle("/create-post", handlers.RequireLogin(http.HandlerFunc(handlers.CreatePostHandler)))
+	http.Handle("/api/create-post", handlers.RequireLogin(http.HandlerFunc(handlers.CreatePostHandler))) // змінено шлях для API
 	http.Handle("/create-comment", handlers.RequireLogin(http.HandlerFunc(handlers.CreateCommentHandler)))
 	http.Handle("/get-posts", handlers.RequireLogin(http.HandlerFunc(handlers.GetPostsHandler)))
 	http.Handle("/get-comments", handlers.RequireLogin(http.HandlerFunc(handlers.GetCommentsHandler)))

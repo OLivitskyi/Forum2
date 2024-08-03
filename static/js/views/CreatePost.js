@@ -1,5 +1,6 @@
 import AbstractView from "./AbstractView.js";
 import { getLayoutHtml } from "./layout.js";
+import { handleCreatePostFormSubmit } from "../eventHandlers.js";
 
 export default class extends AbstractView {
     constructor(params) {
@@ -9,7 +10,7 @@ export default class extends AbstractView {
 
     async getHtml() {
         const content = `
-            <form class="form" id="create-post-view">
+            <form class="form" id="create-post-form">
                 <h1>Create a post</h1>
                 <div class="date"></div>
                 <div class="insights"></div>
@@ -27,5 +28,9 @@ export default class extends AbstractView {
             </form>
         `;
         return getLayoutHtml(content);
+    }
+
+    async postRender() {
+        handleCreatePostFormSubmit();
     }
 }
