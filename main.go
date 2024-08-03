@@ -20,11 +20,11 @@ func main() {
 
 	// Page routes
 	http.HandleFunc("/", handlers.MainPageHandler)
+	http.HandleFunc("/registration", handlers.SignupHandler)
 	http.HandleFunc("/homepage", handlers.HomepageHandler)
 	http.HandleFunc("/logout", handlers.LogoutHandler)
 
 	// API routes
-	http.HandleFunc("/api/registration", handlers.SignupHandler)
 	http.HandleFunc("/api/validate-session", handlers.ValidateSessionHandler)
 
 	http.Handle("/api/create-category", handlers.RequireLogin(http.HandlerFunc(handlers.CreateCategoryHandler)))

@@ -124,7 +124,7 @@ export const router = async () => {
         createAccount.addEventListener("submit", async e => {
             e.preventDefault();
             const formData = new FormData(e.target);
-            let response = await fetch("/api/registration", {
+            let response = await fetch("/registration", {
                 method: "POST",
                 body: formData,
             });
