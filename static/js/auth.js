@@ -33,7 +33,7 @@ export const isAuthenticated = async () => {
 
 // Function to logout the user and redirect to login page
 export const logout = async () => {
-    const response = await sendRequest("/api/logout", "GET");
+    const response = await sendRequest("/logout", "GET");
     if (response.ok) {
         navigateTo("/");
     } else {
