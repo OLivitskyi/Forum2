@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"forum/db"
+	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -110,6 +111,7 @@ func CreateCommentHandler(w http.ResponseWriter, r *http.Request) {
 func GetPostsHandler(w http.ResponseWriter, r *http.Request) {
 	posts, err := db.GetPosts()
 	if err != nil {
+		log.Printf("Error getting posts: %v", err)
 		http.Error(w, "Failed to get posts", http.StatusInternalServerError)
 		return
 	}

@@ -47,3 +47,12 @@ export const sendMessage = async (body) => {
     const response = await sendRequest("/api/send-message", "POST", body);
     return response;
 };
+
+export const getPosts = async () => {
+    const response = await sendRequest("/api/get-posts", "GET");
+
+    if (!response.ok) {
+        throw new Error("Failed to fetch posts");
+    }
+    return await response.json();
+};

@@ -1,10 +1,10 @@
 import { navigateTo } from './router.js';
-import { createPost, createCategory, getCategories, sendMessage } from './api.js';
+import { createPost, createCategory, getCategories, getPosts, sendMessage } from './api.js';
 import { logout } from './auth.js';
 import { setFormMessage } from './formHandler.js';
 import { showError, clearError } from './errorHandler.js';
 
-export const handleLoginFormSubmit = (clearError, showError) => {
+export const handleLoginFormSubmit = () => {
     const loginForm = document.getElementById("login");
     if (loginForm) {
         loginForm.removeEventListener("submit", handleLogin);
@@ -90,11 +90,12 @@ export const handleCreatePostFormSubmit = (clearError, showError) => {
     }
 };
 
-export const handleCreateCategoryFormSubmit = (clearError, showError) => {
+
+export const handleCreateCategoryFormSubmit = () => {
     const form = document.getElementById("create-category-form");
     if (form) {
         form.removeEventListener("submit", handleSubmit);
-        form.addEventListener("submit", handleSubmit, { once: true });
+        form.addEventListener("submit", handleSubmit);
     }
 
     async function handleSubmit(e) {
@@ -178,5 +179,31 @@ export const setupMessageForm = () => {
         } catch (error) {
             showError("Failed to send message");
         }
+    }
+};
+
+export const loadAndRenderPosts = async () => {
+    try {
+        const postsContainer = document.getElementById("posts-container");
+        if (!postsContainer) return;
+
+        const posts = await getPosts();
+        postsContainer.innerHTML = "";
+
+        posts.forEach(post => {
+            const postElement = document.createElement("div");
+            postElement.classList.add("post");
+            postElement.innerHTML = `
+                <h3>${post.subject}</h3>
+                <p>${post.content}</p>
+                <div>
+                    <span>Likes: ${post.like_count}</span>
+                    <span>Dislikes: ${post.dislike_count}</span>
+                </div>
+            `;
+            postsContainer.appendChild(postElement);
+        });
+    } catch (error) {
+        console.error("Failed to load posts:", error);
     }
 };

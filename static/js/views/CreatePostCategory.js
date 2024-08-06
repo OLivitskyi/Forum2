@@ -24,6 +24,6 @@ export default class extends AbstractView {
 
     async postRender() {
         await loadCategories();
-        handleCreateCategoryFormSubmit(clearError, showError);
+        handleCreateCategoryFormSubmit();
     }
 }

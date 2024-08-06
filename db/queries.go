@@ -166,6 +166,7 @@ func CreatePostDB(db *sql.DB, userID uuid.UUID, subject, content string, categor
 	}
 	return tx.Commit()
 }
+
 func GetPosts() ([]Post, error) {
 	rows, err := DB.Query(`
         SELECT p.post_id, p.user_id, p.subject, p.content, p.created_at, 
@@ -176,35 +177,52 @@ func GetPosts() ([]Post, error) {
         GROUP BY p.post_id
         ORDER BY p.created_at DESC`)
 	if err != nil {
+		log.Printf("Error executing query: %v", err)
 		return nil, err
 	}
 	defer rows.Close()
+
 	var posts []Post
 	for rows.Next() {
 		var p Post
 		err := rows.Scan(&p.ID, &p.UserID, &p.Subject, &p.Content, &p.CreatedAt, &p.LikeCount, &p.DislikeCount)
 		if err != nil {
+			log.Printf("Error scanning row: %v", err)
 			return nil, err
 		}
+
 		user, err := GetUserByID(p.UserID)
 		if err != nil {
+			log.Printf("Error getting user by ID: %v", err)
 			return nil, err
 		}
 		p.User = user
+
 		categories, err := GetPostCategories(p.ID)
 		if err != nil {
+			log.Printf("Error getting post categories: %v", err)
 			return nil, err
 		}
 		p.Categories = convertToCategoryPointers(categories)
+
 		comments, err := GetComments(p.ID)
 		if err != nil {
+			log.Printf("Error getting comments: %v", err)
 			return nil, err
 		}
 		p.Comments = convertToCommentPointers(comments)
+
 		posts = append(posts, p)
 	}
+
+	if err = rows.Err(); err != nil {
+		log.Printf("Error iterating over rows: %v", err)
+		return nil, err
+	}
+
 	return posts, nil
 }
+
 func convertToCategoryPointers(categories []Category) []*Category {
 	var categoryPointers []*Category
 	for i := range categories {

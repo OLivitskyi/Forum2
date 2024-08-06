@@ -77,7 +77,7 @@ export const router = async () => {
     setupFormSwitching();
     setupFormValidation();
     handleCreatePostFormSubmit(clearError, showError);
-    handleCreateCategoryFormSubmit(clearError, showError);
+    handleCreateCategoryFormSubmit();
     setupMessageForm();
 
     // Toggle category selection for post creation

@@ -156,3 +156,25 @@ body {
     text-align: center;
     margin-top: 15px;
 }
+
+.posts-container {
+    margin-top: 2rem;
+}
+
+.post {
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: #fff;
+}
+
+.post h3 {
+    margin-top: 0;
+}
+
+.post div {
+    margin-top: 0.5rem;
+    font-size: 0.9rem;
+    color: #555;
+}
