@@ -77,7 +77,6 @@ export const router = async () => {
     setupFormSwitching();
     setupFormValidation();
     handleCreatePostFormSubmit(clearError, showError);
-    handleCreateCategoryFormSubmit();
     setupMessageForm();
 
     // Toggle category selection for post creation
@@ -93,6 +92,11 @@ export const router = async () => {
             e.preventDefault();
             navigateTo("/messages");
         });
+    }
+
+    // Ensure handleCreateCategoryFormSubmit is only called for create-category route
+    if (location.pathname === "/create-category") {
+        handleCreateCategoryFormSubmit(clearError, showError);
     }
 
     // Homepage event handler
