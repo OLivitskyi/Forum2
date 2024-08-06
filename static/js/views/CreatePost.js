@@ -1,11 +1,12 @@
 import AbstractView from "./AbstractView.js";
 import { getLayoutHtml } from "./layout.js";
 import { handleCreatePostFormSubmit, loadCategories } from "../eventHandlers.js";
+import { showError, clearError } from "../errorHandler.js";
 
 export default class extends AbstractView {
     constructor(params) {
         super(params);
-        this.setTitle("CreatePost");
+        this.setTitle("Create Post");
     }
 
     async getHtml() {
@@ -31,6 +32,9 @@ export default class extends AbstractView {
 
     async postRender() {
         await loadCategories();
-        handleCreatePostFormSubmit();
+        const form = document.getElementById("create-post-form");
+        if (form) {
+            form.addEventListener("submit", handleCreatePostFormSubmit, { once: true });
+        }
     }
 }

@@ -24,6 +24,9 @@ export default class extends AbstractView {
 
     async postRender() {
         await loadCategories();
-        handleCreateCategoryFormSubmit();
+        const form = document.getElementById("create-category-form");
+        if (form) {
+            handleCreateCategoryFormSubmit(form);
+        }
     }
 }

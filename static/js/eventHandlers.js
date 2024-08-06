@@ -47,55 +47,46 @@ export const handleLogout = () => {
     }
 };
 
-export const handleCreatePostFormSubmit = (clearError, showError) => {
-    const form = document.getElementById("create-post-form");
-    if (form) {
-        form.removeEventListener("submit", handleSubmit);
-        form.addEventListener("submit", handleSubmit, { once: true });
+export const handleCreatePostFormSubmit = async (e) => {
+    e.preventDefault();
+    clearError();
+
+    const title = document.getElementById("title").value;
+    const content = document.getElementById("content").value;
+    const categorySelect = document.getElementById("category-select");
+    const category = categorySelect.value;
+
+    if (!title || !content || !category) {
+        showError("Title, content, and category are required");
+        return;
     }
 
-    async function handleSubmit(e) {
-        e.preventDefault();
-        clearError();
+    const body = {
+        title,
+        content,
+        category_ids: [category]
+    };
 
-        const title = document.getElementById("title").value;
-        const content = document.getElementById("content").value;
-        const categorySelect = document.getElementById("category-select");
-        const category = categorySelect.value;
+    try {
+        const response = await createPost(body);
 
-        if (!title || !content || !category) {
-            showError("Title, content, and category are required");
-            return;
+        if (response.ok) {
+            clearError();
+            navigateTo("/homepage");
+        } else {
+            const errorText = await response.text();
+            showError(errorText || "Failed to create post");
         }
-
-        const body = {
-            title,
-            content,
-            category_ids: [category]
-        };
-
-        try {
-            const response = await createPost(body);
-
-            if (response.ok) {
-                clearError();
-                navigateTo("/homepage");
-            } else {
-                const errorText = await response.text();
-                showError(errorText || "Failed to create post");
-            }
-        } catch (error) {
-            showError("An error occurred. Please try again.");
-        }
+    } catch (error) {
+        showError("An error occurred. Please try again.");
     }
 };
 
-
-export const handleCreateCategoryFormSubmit = () => {
+export const handleCreateCategoryFormSubmit = (clearError, showError) => {
     const form = document.getElementById("create-category-form");
     if (form) {
         form.removeEventListener("submit", handleSubmit);
-        form.addEventListener("submit", handleSubmit);
+        form.addEventListener("submit", handleSubmit, { once: true });
     }
 
     async function handleSubmit(e) {
@@ -191,11 +182,13 @@ export const loadAndRenderPosts = async () => {
         postsContainer.innerHTML = "";
 
         posts.forEach(post => {
+            const categories = post.categories.map(category => `<span class="category">${category.name}</span>`).join(', ');
             const postElement = document.createElement("div");
             postElement.classList.add("post");
             postElement.innerHTML = `
                 <h3>${post.subject}</h3>
                 <p>${post.content}</p>
+                <div class="post-categories">Categories: ${categories}</div>
                 <div>
                     <span>Likes: ${post.like_count}</span>
                     <span>Dislikes: ${post.dislike_count}</span>

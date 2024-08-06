@@ -68,7 +68,7 @@ export const router = async () => {
     const view = new match.route.view(getParams(match));
     document.querySelector("#app").innerHTML = await view.getHtml();
     if (view.postRender) {
-        view.postRender();
+        await view.postRender();
     }
 
     // Call setup functions after view is loaded
@@ -76,8 +76,12 @@ export const router = async () => {
     handleLogout();
     setupFormSwitching();
     setupFormValidation();
-    handleCreatePostFormSubmit(clearError, showError);
-    handleCreateCategoryFormSubmit();
+    if (location.pathname === "/create-post") {
+        handleCreatePostFormSubmit(clearError, showError);
+    }
+    if (location.pathname === "/create-category") {
+        handleCreateCategoryFormSubmit(clearError, showError);
+    }
     setupMessageForm();
 
     // Toggle category selection for post creation
