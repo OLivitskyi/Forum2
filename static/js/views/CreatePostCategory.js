@@ -1,12 +1,14 @@
 import AbstractView from "./AbstractView.js";
 import { getLayoutHtml } from "./layout.js";
-import { handleCreateCategoryFormSubmit, loadCategories } from "../eventHandlers.js";
+import { handleCreateCategoryFormSubmit, loadCategories } from "../handlers/categoryHandlers.js";
 import { showError, clearError } from "../errorHandler.js";
+
 export default class extends AbstractView {
     constructor(params) {
         super(params);
         this.setTitle("Create Category");
     }
+
     async getHtml() {
         const content = `
             <form class="form" id="create-category-form">
@@ -22,15 +24,16 @@ export default class extends AbstractView {
         `;
         return getLayoutHtml(content);
     }
+
     async postRender() {
         await loadCategories();
-        // Remove any existing event listeners to avoid duplicate submissions
         const form = document.getElementById("create-category-form");
         if (form) {
             form.removeEventListener("submit", this.handleCategoryFormSubmit);
             form.addEventListener("submit", this.handleCategoryFormSubmit);
         }
     }
+
     handleCategoryFormSubmit = (e) => {
         e.preventDefault();
         clearError();

@@ -1,6 +1,6 @@
 import AbstractView from "./AbstractView.js";
 import { getLayoutHtml } from "./layout.js";
-import { handleCreatePostFormSubmit, loadCategories } from "../eventHandlers.js";
+import { handleCreatePostFormSubmit, loadCategories } from "../handlers/postHandlers.js";
 import { showError, clearError } from "../errorHandler.js";
 
 export default class extends AbstractView {

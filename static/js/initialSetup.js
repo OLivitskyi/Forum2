@@ -1,12 +1,14 @@
+import { navigateTo } from './routeUtils.js';
 import { router } from './router.js';
-import { navigateTo } from './routeUtils.js'; // Оновлено шлях до routeUtils.js
 
 document.addEventListener("DOMContentLoaded", () => {
-    document.body.addEventListener("click", e => {
+    const handleLinkClick = (e) => {
         if (e.target.matches("[data-link]")) {
-            e.prevent.preventDefault();
+            e.preventDefault();
             navigateTo(e.target.href);
         }
-    });
+    };
+
+    document.body.addEventListener("click", handleLinkClick);
     router();
 });

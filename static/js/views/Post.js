@@ -1,11 +1,13 @@
-import { loadAndRenderSinglePost, loadAndRenderComments } from "../eventHandlers.js";
+import { loadAndRenderSinglePost, loadAndRenderComments } from "../handlers/postHandlers.js";
 import AbstractView from "./AbstractView.js";
 import { getLayoutHtml } from "./layout.js";
+
 export default class extends AbstractView {
     constructor(params) {
         super(params);
         this.setTitle("Post");
     }
+
     async getHtml() {
         const content = `
       <div id="single-post-container">
@@ -23,10 +25,11 @@ export default class extends AbstractView {
         <button type="submit">Add Comment</button>
       </form>
     `;
-    return getLayoutHtml(content);
+        return getLayoutHtml(content);
     }
+
     async postRender() {
-      await loadAndRenderSinglePost(this.params.id);
-      await loadAndRenderComments(this.params.id);
+        await loadAndRenderSinglePost(this.params.id);
+        await loadAndRenderComments(this.params.id);
     }
 }

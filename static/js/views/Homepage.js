@@ -23,14 +23,12 @@ export default class extends AbstractView {
         await loadAndRenderPosts();
         setupWebSocketHandlers();
 
-        console.log("Cookies:", document.cookie);
-        const sessionToken = document.cookie.split('; ').find(row => row.startsWith('session_token='));
+        const sessionToken = localStorage.getItem('session_token');
+        console.log("Session Token from localStorage:", sessionToken);
         if (sessionToken) {
-            const tokenValue = sessionToken.split('=')[1];
-            console.log("Session Token:", tokenValue);
-            connectWebSocket(tokenValue);
+            connectWebSocket(sessionToken);
         } else {
-            console.error("Session token not found");
+            console.error("Session token not found in localStorage");
         }
     }
 }

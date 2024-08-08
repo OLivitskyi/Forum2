@@ -1,9 +1,9 @@
-import { navigateTo } from './router.js';
+import { navigateTo } from './routeUtils.js';
+
 export const sendRequest = async (url, method, body = null) => {
     const headers = new Headers();
     headers.append('Content-Type', 'application/json');
     
-    // Get session token from cookies
     const sessionToken = document.cookie.split('; ').find(row => row.startsWith('session_token='));
     if (sessionToken) {
         headers.append('Authorization', `Bearer ${sessionToken.split('=')[1]}`);
@@ -15,7 +15,6 @@ export const sendRequest = async (url, method, body = null) => {
         body: body ? JSON.stringify(body) : null
     });
 
-    // If unauthorized, redirect to login page
     if (response.status === 401) {
         navigateTo("/");
     }
@@ -30,6 +29,7 @@ export const getCategories = async () => {
     }
     return await response.json();
 };
+
 export const createPost = async (post) => {
     return fetch('/api/create-post', {
         method: 'POST',
@@ -44,10 +44,12 @@ export const createCategory = async (body) => {
     const response = await sendRequest("/api/create-category", "POST", body);
     return response;
 };
+
 export const sendMessage = async (body) => {
     const response = await sendRequest("/api/send-message", "POST", body);
     return response;
 };
+
 export const getPosts = async () => {
     const response = await sendRequest("/api/get-posts", "GET");
     if (!response.ok) {
@@ -55,6 +57,7 @@ export const getPosts = async () => {
     }
     return await response.json();
 };
+
 export const getPost = async (body) => {
     const response = await fetch("/api/get-post", {
         method: "POST",

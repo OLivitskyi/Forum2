@@ -63,7 +63,13 @@ func CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	broadcast <- post
+	// Створюємо повідомлення типу PostMessage і відправляємо його в канал broadcast
+	postMessage := PostMessage{
+		MessageID: uuid.Must(uuid.NewV4()),
+		Post:      *post,
+		Timestamp: time.Now(),
+	}
+	broadcast <- postMessage
 
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(post)

@@ -9,6 +9,11 @@ export const connectWebSocket = (sessionToken) => {
         return;
     }
 
+    if (socket && socket.readyState === WebSocket.OPEN) {
+        console.log("WebSocket is already connected");
+        return;
+    }
+
     socket = new WebSocket(`ws://localhost:8080/ws?session_token=${sessionToken}`);
 
     socket.onopen = () => {
@@ -22,8 +27,10 @@ export const connectWebSocket = (sessionToken) => {
             messageHandler(message);
         } else if (message.type === "reaction") {
             reactionHandler(message);
-        } else if (message.subject) { // New post
-            postHandler(message);
+        } else if (message.type === "post") { // New post
+            postHandler(message.data); // Передаємо тільки дані посту
+        } else {
+            console.warn("Unknown message type:", message);
         }
     };
 
@@ -38,8 +45,9 @@ export const connectWebSocket = (sessionToken) => {
 
 export const sendPost = (post) => {
     if (socket && socket.readyState === WebSocket.OPEN) {
-        console.log("Sending post:", post);
-        socket.send(JSON.stringify({ type: 'post', data: post }));
+        const message = { type: 'post', data: post };
+        console.log("Sending post:", message);
+        socket.send(JSON.stringify(message));
     } else {
         console.error("WebSocket is not connected");
     }
@@ -59,6 +67,7 @@ export const setPostHandler = (handler) => {
 
 export const setupWebSocketHandlers = () => {
     setPostHandler((post) => {
+        console.log("Handling new post:", post); // Додано логування для перевірки
         const postsContainer = document.getElementById("posts-container");
         if (postsContainer) {
             const categories = post.categories.map(category => `<span class="category">${category.name}</span>`).join(', ');

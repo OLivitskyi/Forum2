@@ -1,55 +1,13 @@
-import Homepage from "./views/Homepage.js";
-import Login from "./views/Login.js";
-import Registration from "./views/Registration.js";
-import CreatePost from "./views/CreatePost.js";
-import Messages from "./views/Messages.js";
-import CreatePostCategory from "./views/CreatePostCategory.js";
-import PostDetails from "./views/Post.js";
+import { routes } from './routes.js';
+import { pathToRegex, getParams, navigateTo } from './routeUtils.js';
 import { isAuthenticated } from './auth.js';
 import { handleLoginFormSubmit, handleLogout, handleCreatePostFormSubmit, handleCreateCategoryFormSubmit, setupWebSocketHandlers } from './eventHandlers.js';
 import { showError, clearError } from './errorHandler.js';
 import { setInputError, clearInputError, setupFormSwitching, setupFormValidation } from './formHandler.js';
 
-// Function to convert path to regex for route matching
-const pathToRegex = path => new RegExp("^" + path.replace(/\//g, "\\/").replace(/:\w+/g, "(.+)") + "$");
-
-// Function to get parameters from the matched route
-const getParams = match => {
-    const values = match.result.slice(1);
-    const keys = Array.from(match.route.path.matchAll(/:(\w+)/g)).map(result => result[1]);
-    return Object.fromEntries(keys.map((key, i) => {
-        return [key, values[i]];
-    }));
-};
-
-// Function to navigate to a new URL and call the router
-export const navigateTo = url => {
-    history.pushState(null, null, url);
-    router();
-};
-
-// Function to navigate to post details
-export const navigateToPostDetails = postId => {
-    const url = `/post/${postId}`;
-    history.pushState(null, null, url);
-    router();
-}
-
-// Main router function to handle route changes
 export const router = async () => {
-    console.log("Routing started"); 
-    const routes = [
-        { path: "/", view: Login },
-        { path: "/registration", view: Registration },
-        { path: "/homepage", view: Homepage, protected: true },
-        { path: "/logout", view: Login },
-        { path: "/create-post", view: CreatePost, protected: true },
-        { path: "/messages", view: Messages, protected: true },
-        { path: "/create-category", view: CreatePostCategory, protected: true },
-        { path: "/post/:id", view: PostDetails }
-    ];
+    console.log("Routing started");
 
-    // Find the matching route
     const potentialMatches = routes.map(route => {
         return {
             route: route,
@@ -65,7 +23,6 @@ export const router = async () => {
         };
     }
 
-    // Check if the route is protected and if the user is authenticated
     if (match.route.protected) {
         const auth = await isAuthenticated();
         if (!auth) {
@@ -75,7 +32,6 @@ export const router = async () => {
         }
     }
 
-    // Load the view for the matched route
     const view = new match.route.view(getParams(match));
     document.querySelector("#app").innerHTML = await view.getHtml();
     if (view.postRender) {
@@ -84,21 +40,22 @@ export const router = async () => {
 
     console.log(`View for ${location.pathname} loaded`);
 
-    // Call setup functions after view is loaded
     handleLoginFormSubmit();
     handleLogout();
     setupFormSwitching();
     setupFormValidation();
     handleCreatePostFormSubmit(clearError, showError);
+    handleCreateCategoryFormSubmit(clearError, showError);
     setupWebSocketHandlers();
+    setupElementHandlers();
+};
 
-    // Toggle category selection for post creation
+const setupElementHandlers = () => {
     document.querySelectorAll(".pill").forEach(pill => {
         pill.addEventListener("click", () => pill.classList.toggle("pill--selected"));
     });
 
-    // Messages event handler
-    let messages = document.getElementById("messages");
+    const messages = document.getElementById("messages");
     if (messages) {
         messages.addEventListener("click", async e => {
             console.log("messages clicked");
@@ -107,8 +64,7 @@ export const router = async () => {
         });
     }
 
-    // Create post event handler
-    let createpost = document.getElementById("create-post");
+    const createpost = document.getElementById("create-post");
     if (createpost) {
         createpost.addEventListener("click", async e => {
             console.log("create post clicked");
@@ -117,8 +73,7 @@ export const router = async () => {
         });
     }
 
-    // Create category event handler
-    let createcategory = document.getElementById("create-category");
+    const createcategory = document.getElementById("create-category");
     if (createcategory) {
         createcategory.addEventListener("click", async e => {
             console.log("create category clicked");
@@ -127,13 +82,11 @@ export const router = async () => {
         });
     }
 
-    // Ensure handleCreateCategoryFormSubmit is only called for create-category route
     if (location.pathname === "/create-category") {
         handleCreateCategoryFormSubmit(clearError, showError);
     }
 
-    // Homepage event handler
-    let homepage = document.getElementById("homepage");
+    const homepage = document.getElementById("homepage");
     if (homepage) {
         homepage.addEventListener("click", async e => {
             console.log("homepage clicked");
@@ -142,7 +95,6 @@ export const router = async () => {
         });
     }
 
-    // Input validation for registration form
     document.querySelectorAll(".form__input").forEach(inputElement => {
         inputElement.addEventListener("blur", e => {
             if (e.target.id === "signupUsername") {
@@ -158,39 +110,16 @@ export const router = async () => {
             clearInputError(inputElement);
         });
     });
-
-    // Registration event handler
-    let createAccount = document.getElementById("createAccount");
-    if (createAccount) {
-        createAccount.addEventListener("submit", async e => {
-            e.preventDefault();
-            const formData = new FormData(e.target);
-            let response = await fetch("/registration", {
-                method: "POST",
-                body: formData,
-            });
-            if (response.ok) {
-                navigateTo("/");
-            } else {
-                const errorText = await response.text();
-                showError(errorText || "Registration failed. Please try again.");
-            }
-        });
-    }
 };
 
-// Handle back/forward button navigation
 window.addEventListener("popstate", router);
 
-// Initial setup and event listeners
 document.addEventListener("DOMContentLoaded", () => {
-    const handleLinkClick = (e) => {
+    document.body.addEventListener("click", e => {
         if (e.target.matches("[data-link]")) {
             e.preventDefault();
             navigateTo(e.target.href);
         }
-    };
-
-    document.body.addEventListener("click", handleLinkClick);
+    });
     router();
 });

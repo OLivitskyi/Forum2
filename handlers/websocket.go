@@ -1,4 +1,3 @@
-// handlers/websocket.go
 package handlers
 
 import (
@@ -24,10 +23,47 @@ var broadcast = make(chan interface{})
 var mutex = &sync.Mutex{}
 var processedMessages = make(map[uuid.UUID]struct{})
 
+type Message interface {
+	Process()
+}
+
 type PostMessage struct {
 	MessageID uuid.UUID `json:"message_id"`
+	Type      string    `json:"type"`
 	Post      db.Post   `json:"post"`
 	Timestamp time.Time `json:"timestamp"`
+}
+
+func (pm PostMessage) Process() {
+	log.Printf("Broadcasting new post: %+v", pm.Post)
+	mutex.Lock()
+	if _, exists := processedMessages[pm.MessageID]; exists {
+		mutex.Unlock()
+		return
+	}
+	processedMessages[pm.MessageID] = struct{}{}
+	mutex.Unlock()
+
+	completePost, err := db.GetPostByID(pm.Post.ID)
+	if err != nil {
+		log.Printf("Error fetching complete post data: %v", err)
+		return
+	}
+	for client := range clients {
+		log.Printf("Sending post to client: %v", clients[client])
+		message := map[string]interface{}{
+			"type": "post",
+			"data": completePost,
+		}
+		err := client.WriteJSON(message)
+		if err != nil {
+			log.Printf("Error writing to websocket: %v", err)
+			client.Close()
+			mutex.Lock()
+			delete(clients, client)
+			mutex.Unlock()
+		}
+	}
 }
 
 func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
@@ -75,6 +111,8 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
+		log.Printf("Received message: %v", message)
+
 		if postType, ok := message["type"].(string); ok && postType == "post" {
 			var post db.Post
 			postData, _ := json.Marshal(message["data"])
@@ -85,6 +123,7 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 			log.Printf("Received post from user %s: %v", userID, post)
 			postMessage := PostMessage{
 				MessageID: uuid.Must(uuid.NewV4()),
+				Type:      "post",
 				Post:      post,
 				Timestamp: time.Now(),
 			}
@@ -98,78 +137,10 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 func handleMessages() {
 	for {
 		msg := <-broadcast
-		switch m := msg.(type) {
-		case PostMessage:
-			log.Printf("Broadcasting new post: %+v", m.Post)
-			mutex.Lock()
-			if _, exists := processedMessages[m.MessageID]; exists {
-				mutex.Unlock()
-				continue
-			}
-			processedMessages[m.MessageID] = struct{}{}
-			mutex.Unlock()
-
-			completePost, err := db.GetPostByID(m.Post.ID)
-			if err != nil {
-				log.Printf("Error fetching complete post data: %v", err)
-				continue
-			}
-			for client := range clients {
-				err := client.WriteJSON(completePost)
-				if err != nil {
-					log.Printf("Error writing to websocket: %v", err)
-					client.Close()
-					mutex.Lock()
-					delete(clients, client)
-					mutex.Unlock()
-				}
-			}
-		case db.WebSocketMessage:
-			log.Printf("Broadcasting message: %v", m)
-			err := db.AddMessage(m.Sender, m.Receiver, m.Content)
-			if err != nil {
-				log.Printf("Error storing message in the database: %v", err)
-				continue
-			}
-			for client := range clients {
-				if clients[client] == m.Receiver {
-					err := client.WriteJSON(m)
-					if err != nil {
-						log.Printf("Error writing to websocket: %v", err)
-						client.Close()
-						mutex.Lock()
-						delete(clients, client)
-						mutex.Unlock()
-					}
-				}
-			}
-		case db.ReactionMessage:
-			log.Printf("Broadcasting reaction: %v", m)
-			if m.PostID != uuid.Nil {
-				err := db.AddPostReaction(m.UserID, m.PostID, m.ReactionType)
-				if err != nil {
-					log.Printf("Error storing post reaction in the database: %v", err)
-					continue
-				}
-			} else if m.CommentID != uuid.Nil {
-				err := db.AddCommentReaction(m.UserID, m.CommentID, m.ReactionType)
-				if err != nil {
-					log.Printf("Error storing comment reaction in the database: %v", err)
-					continue
-				}
-			}
-			for client := range clients {
-				err := client.WriteJSON(m)
-				if err != nil {
-					log.Printf("Error writing to websocket: %v", err)
-					client.Close()
-					mutex.Lock()
-					delete(clients, client)
-					mutex.Unlock()
-				}
-			}
-		default:
-			log.Printf("Unknown message type: %T", m)
+		if message, ok := msg.(Message); ok {
+			message.Process()
+		} else {
+			log.Printf("Unknown message type: %T", msg)
 		}
 	}
 }

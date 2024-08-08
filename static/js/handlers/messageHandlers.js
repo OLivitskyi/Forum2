@@ -1,6 +1,6 @@
 import { sendMessage } from '../websocket.js';
 import { showError, clearError } from '../errorHandler.js';
-import { navigateTo } from '../router.js';
+import { navigateTo } from '../routeUtils.js'; // Оновлено шлях до routeUtils.js
 
 export const setupMessageForm = () => {
     const messageForm = document.getElementById("message-form");
@@ -11,7 +11,7 @@ export const setupMessageForm = () => {
 };
 
 export async function handleSendMessage(e) {
-    e.preventDefault();
+    e.prevent.preventDefault();
     const receiverID = document.getElementById("receiver-id").value;
     const content = document.getElementById("message-content").value;
     if (!receiverID || !content) {

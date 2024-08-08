@@ -1,7 +1,7 @@
-import { navigateTo, navigateToPostDetails } from '../router.js';
-import { createPost, getPosts, getPost } from '../api.js';
+import { navigateTo } from '../routeUtils.js';
+import { createPost, getPosts, getPost, getCategories } from '../api.js'; 
 import { showError, clearError } from '../errorHandler.js';
-import { sendPost } from '../websocket.js';
+import { sendPost, connectWebSocket } from '../websocket.js';
 
 export const handleCreatePostFormSubmit = (clearError, showError) => {
     const form = document.getElementById("create-post-form");
@@ -34,7 +34,14 @@ async function handleCreatePostSubmit(e) {
             navigateTo("/homepage");
 
             const post = await response.json();
-            sendPost(post); // Відправка посту через вебсокет
+            console.log("Post created, sending via WebSocket:", post);
+            
+            // Дочекайтесь відкриття WebSocket з'єднання перед відправкою посту
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                sendPost(post);
+            } else {
+                console.error("WebSocket is not connected. Cannot send post.");
+            }
         } else {
             const errorText = await response.text();
             showError(errorText || "Failed to create post");
@@ -71,7 +78,6 @@ export const loadAndRenderPosts = async () => {
     }
 };
 
-// Fetches single post details and displays them
 export const loadAndRenderSinglePost = async (postId) => {
     try {
         console.log("Loading post details for post ID:", postId);
@@ -91,8 +97,8 @@ export const loadAndRenderSinglePost = async (postId) => {
     } catch (error) {
         console.error("Failed to load post:", error);
     }
-}
-// Fetches comments for a post and displays them
+};
+
 export const loadAndRenderComments = async (postId) => {
     try {
         const commentsContainer = document.getElementById("comments-container");
@@ -110,5 +116,26 @@ export const loadAndRenderComments = async (postId) => {
         });
     } catch (error) {
         console.error("Failed to load comments:", error);
+    }
+};
+
+export const loadCategories = async () => {
+    try {
+        const categorySelect = document.getElementById("category-select");
+        if (!categorySelect) return;
+        categorySelect.innerHTML = '<option value="">Select a category</option>';
+        const categories = await getCategories();
+        categories.forEach(category => {
+            const option = document.createElement("option");
+            option.value = category.id;
+            option.textContent = category.name;
+            categorySelect.appendChild(option);
+        });
+    } catch (error) {
+        console.error("Failed to load categories:", error);
+        const messageElement = document.getElementById("category-message");
+        if (messageElement) {
+            setFormMessage(messageElement, "error", error.message || "Failed to load categories");
+        }
     }
 };
