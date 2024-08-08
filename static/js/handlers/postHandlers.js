@@ -71,14 +71,13 @@ export const loadAndRenderPosts = async () => {
     }
 };
 
-export const loadAndRendeSinglePost = async (postId) => {
+// Fetches single post details and displays them
+export const loadAndRenderSinglePost = async (postId) => {
     try {
         console.log("Loading post details for post ID:", postId);
         const postContainer = document.getElementById("single-post-container");
         if (!postContainer) return;
-
         const post = await getPost(postId);
-        console.log(post);
         postContainer.innerHTML = `
             <div>
                 <div>${post.subject}</div>
@@ -93,3 +92,23 @@ export const loadAndRendeSinglePost = async (postId) => {
         console.error("Failed to load post:", error);
     }
 }
+// Fetches comments for a post and displays them
+export const loadAndRenderComments = async (postId) => {
+    try {
+        const commentsContainer = document.getElementById("comments-container");
+        if (!commentsContainer) return;
+        const comments = await getComments(postId);
+        commentsContainer.innerHTML = "";
+        comments.forEach(comment => {
+            const commentElement = document.createElement("div");
+            commentElement.classList.add("comment");
+            commentElement.innerHTML = `
+                <h4>${comment.author}</h4>
+                <p>${comment.content}</p>
+            `;
+            commentsContainer.appendChild(commentElement);
+        });
+    } catch (error) {
+        console.error("Failed to load comments:", error);
+    }
+};

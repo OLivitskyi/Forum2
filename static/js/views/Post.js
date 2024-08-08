@@ -1,4 +1,4 @@
-import { loadAndRendeSinglePost } from "../eventHandlers.js";
+import { loadAndRenderSinglePost, loadAndRenderComments } from "../eventHandlers.js";
 import AbstractView from "./AbstractView.js";
 import { getLayoutHtml } from "./layout.js";
 export default class extends AbstractView {
@@ -17,12 +17,16 @@ export default class extends AbstractView {
           <label for="content">Comment</label>
           <textarea id="content" name="content" required></textarea>
         </div>
+        <div id="comments-container">
+        <!-- Comments will be dynamically loaded here -->
+        </div>
         <button type="submit">Add Comment</button>
       </form>
     `;
     return getLayoutHtml(content);
     }
     async postRender() {
-      await loadAndRendeSinglePost(this.params.id);
+      await loadAndRenderSinglePost(this.params.id);
+      await loadAndRenderComments(this.params.id);
     }
 }

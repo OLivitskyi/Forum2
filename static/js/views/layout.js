@@ -4,7 +4,7 @@ export const getLayoutHtml = (content) => {
             <aside>
                 <div class="top">
                     <div class="logo">
-                        <img src="./images/logo.png" />
+                        <span class="material-icons-sharp logo-icon">app_registration</span>
                         <h2>FOR<span class="danger">UM</span></h2>
                     </div>
                     <div class="close" id="close-btn">
