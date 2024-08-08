@@ -24,7 +24,7 @@ func SignupProcess(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	data := []interface{}{username, age, gender, firstName, lastName, email, string(encryptedPassword)}
-	_, err = db.RegisterUser(data)
+	err = db.RegisterUser(data)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(err.Error()))
@@ -36,7 +36,7 @@ func SignupProcess(w http.ResponseWriter, r *http.Request) {
 func LoginProcess(w http.ResponseWriter, r *http.Request) {
 	usernameOrEmail := r.FormValue("username")
 	password := r.FormValue("password")
-	login, err := db.LoginUser(db.DB, usernameOrEmail, password)
+	login, err := db.LoginUser(usernameOrEmail, password)
 	if err != nil {
 		w.WriteHeader(http.StatusForbidden)
 		w.Write([]byte(err.Error()))

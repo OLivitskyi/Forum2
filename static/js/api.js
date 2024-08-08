@@ -55,3 +55,16 @@ export const getPosts = async () => {
     }
     return await response.json();
 };
+export const getPost = async (body) => {
+    const response = await fetch("/api/get-post", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(body)
+    });
+    if (!response.ok) {
+        throw new Error("Failed to fetch post");
+    }
+    return await response.json();
+};

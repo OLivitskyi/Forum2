@@ -15,7 +15,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	usernameOrEmail := r.FormValue("username")
 	password := r.FormValue("password")
-	login, err := db.LoginUser(db.DB, usernameOrEmail, password)
+	login, err := db.LoginUser(usernameOrEmail, password)
 	if err != nil {
 		w.WriteHeader(http.StatusForbidden)
 		w.Write([]byte(err.Error()))

@@ -51,7 +51,7 @@ func CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 		categoryIDInts = append(categoryIDInts, categoryID)
 	}
 
-	err = db.CreatePostDB(db.DB, userID, requestData.Title, requestData.Content, categoryIDInts, time.Now())
+	err = db.CreatePostDB(userID, requestData.Title, requestData.Content, categoryIDInts, time.Now())
 	if err != nil {
 		http.Error(w, "Failed to create post", http.StatusInternalServerError)
 		return
@@ -229,4 +229,29 @@ func AddCommentReactionHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusOK)
+}
+
+func GetPostHandler(w http.ResponseWriter, r *http.Request) {
+	var postID string
+	err := json.NewDecoder(r.Body).Decode(&postID)
+	if err != nil {
+		http.Error(w, "Invalid JSON data", http.StatusBadRequest)
+		return
+	}
+
+	parsedPostID, err := uuid.FromString(postID)
+	if err != nil {
+		http.Error(w, "Invalid post ID format", http.StatusBadRequest)
+		return
+	}
+
+	post, err := db.GetPostByID(parsedPostID)
+	if err != nil {
+		log.Printf("Error getting post: %v", err)
+		http.Error(w, "Failed to get post", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(post)
 }

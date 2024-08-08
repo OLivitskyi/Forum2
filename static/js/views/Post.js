@@ -1,3 +1,4 @@
+import { loadAndRendeSinglePost } from "../eventHandlers.js";
 import AbstractView from "./AbstractView.js";
 import { getLayoutHtml } from "./layout.js";
 export default class extends AbstractView {
@@ -7,7 +8,7 @@ export default class extends AbstractView {
     }
     async getHtml() {
         const content = `
-      <div id="post-container">
+      <div id="single-post-container">
         <!-- Post content will be dynamically loaded here -->
       </div>
       <form class="form" id="create-comment-form">
@@ -20,5 +21,8 @@ export default class extends AbstractView {
       </form>
     `;
     return getLayoutHtml(content);
+    }
+    async postRender() {
+      await loadAndRendeSinglePost(this.params.id);
     }
 }

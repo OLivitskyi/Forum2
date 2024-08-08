@@ -1,5 +1,5 @@
 import { navigateTo, navigateToPostDetails } from '../router.js';
-import { createPost, getPosts } from '../api.js';
+import { createPost, getPosts, getPost } from '../api.js';
 import { showError, clearError } from '../errorHandler.js';
 import { sendPost } from '../websocket.js';
 
@@ -70,3 +70,26 @@ export const loadAndRenderPosts = async () => {
         console.error("Failed to load posts:", error);
     }
 };
+
+export const loadAndRendeSinglePost = async (postId) => {
+    try {
+        console.log("Loading post details for post ID:", postId);
+        const postContainer = document.getElementById("single-post-container");
+        if (!postContainer) return;
+
+        const post = await getPost(postId);
+        console.log(post);
+        postContainer.innerHTML = `
+            <div>
+                <div>${post.subject}</div>
+                <p>${post.content}</p>
+                <div>
+                    <span>Likes: ${post.like_count}</span>
+                    <span>Dislikes: ${post.dislike_count}</span>
+                </div>
+            </div>
+        `;
+    } catch (error) {
+        console.error("Failed to load post:", error);
+    }
+}

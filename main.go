@@ -37,6 +37,7 @@ func main() {
 	http.Handle("/api/create-post", handlers.RequireLogin(http.HandlerFunc(handlers.CreatePostHandler)))
 	http.Handle("/api/create-comment", handlers.RequireLogin(http.HandlerFunc(handlers.CreateCommentHandler)))
 	http.Handle("/api/get-posts", handlers.RequireLogin(http.HandlerFunc(handlers.GetPostsHandler)))
+	http.Handle("/api/get-post", handlers.RequireLogin(http.HandlerFunc(handlers.GetPostHandler)))
 	http.Handle("/api/get-comments", handlers.RequireLogin(http.HandlerFunc(handlers.GetCommentsHandler)))
 	http.Handle("/api/send-message", handlers.RequireLogin(http.HandlerFunc(handlers.SendMessageHandler)))
 	http.Handle("/api/get-messages", handlers.RequireLogin(http.HandlerFunc(handlers.GetMessagesHandler)))
