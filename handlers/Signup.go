@@ -3,6 +3,7 @@ package handlers
 import (
 	"fmt"
 	"forum/db"
+	"log"
 	"net/http"
 	"time"
 
@@ -53,11 +54,17 @@ func LoginProcess(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Failed to create session"))
 		return
 	}
+
 	http.SetCookie(w, &http.Cookie{
-		Name:    "session_token",
-		Value:   token,
-		Expires: time.Now().Add(24 * time.Hour),
+		Name:     "session_token",
+		Value:    token,
+		Expires:  time.Now().Add(24 * time.Hour),
+		Path:     "/",
+		HttpOnly: true,
 	})
+
+	log.Printf("User %s logged in with session token %s", login.Username, token)
+
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Login successful"))
+	w.Write([]byte(token))
 }

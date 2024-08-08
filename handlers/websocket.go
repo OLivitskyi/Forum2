@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"forum/db"
 	"log"
 	"net/http"
@@ -16,25 +17,27 @@ var upgrader = websocket.Upgrader{
 		return true
 	},
 }
+
 var clients = make(map[*websocket.Conn]uuid.UUID)
 var broadcast = make(chan interface{})
 var mutex = &sync.Mutex{}
 
-func handleConnections(w http.ResponseWriter, r *http.Request) {
+func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 	ws, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Fatalf("Error upgrading to websocket: %v", err)
 		return
 	}
 	defer func() {
-		ws.Close()
-		log.Printf("User %s disconnected", clients[ws])
+		userID := clients[ws]
 		mutex.Lock()
 		delete(clients, ws)
 		mutex.Unlock()
-		db.UpdateUserStatus(clients[ws], false)
+		db.UpdateUserStatus(userID, false)
+		ws.Close()
+		log.Printf("User %s disconnected", userID)
 	}()
-	// Read session token from query parameters
+
 	sessionToken := r.URL.Query().Get("session_token")
 	if sessionToken == "" {
 		log.Println("Unauthorized access: session token missing")
@@ -50,6 +53,7 @@ func handleConnections(w http.ResponseWriter, r *http.Request) {
 	clients[ws] = userID
 	mutex.Unlock()
 	db.UpdateUserStatus(userID, true)
+
 	for {
 		var msg interface{}
 		err := ws.ReadJSON(&msg)
@@ -58,6 +62,19 @@ func handleConnections(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 		switch m := msg.(type) {
+		case map[string]interface{}:
+			if postType, ok := m["type"].(string); ok && postType == "post" {
+				var post db.Post
+				postData, _ := json.Marshal(m["data"])
+				if err := json.Unmarshal(postData, &post); err != nil {
+					log.Printf("Error unmarshalling post data: %v", err)
+					continue
+				}
+				log.Printf("Received post from user %s: %v", userID, post)
+				broadcast <- post
+			} else {
+				log.Printf("Unknown map message type: %v", m)
+			}
 		case db.WebSocketMessage:
 			m.Timestamp = time.Now().Format(time.RFC3339)
 			log.Printf("Received message from user %s: %v", userID, m)
@@ -65,6 +82,9 @@ func handleConnections(w http.ResponseWriter, r *http.Request) {
 		case db.ReactionMessage:
 			m.UserID = userID
 			log.Printf("Received reaction from user %s: %v", userID, m)
+			broadcast <- m
+		case db.Post:
+			log.Printf("Received post from user %s: %v", userID, m)
 			broadcast <- m
 		default:
 			log.Printf("Unknown message type: %T", m)
@@ -120,13 +140,29 @@ func handleMessages() {
 					mutex.Unlock()
 				}
 			}
+		case db.Post:
+			log.Printf("Broadcasting new post: %+v", m)
+			completePost, err := db.GetPostByID(m.ID)
+			if err != nil {
+				log.Printf("Error fetching complete post data: %v", err)
+				continue
+			}
+			for client := range clients {
+				err := client.WriteJSON(completePost)
+				if err != nil {
+					log.Printf("Error writing to websocket: %v", err)
+					client.Close()
+					mutex.Lock()
+					delete(clients, client)
+					mutex.Unlock()
+				}
+			}
 		default:
 			log.Printf("Unknown message type: %T", m)
 		}
 	}
 }
 
-func WebSocketHandler() {
-	http.HandleFunc("/ws", handleConnections)
+func InitWebSocketHandler() {
 	go handleMessages()
 }

@@ -1,5 +1,4 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
-
 :root {
     --color-primary: #7380ec;
     --color-danger: #ff7782;
@@ -21,7 +20,7 @@
     --padding-1: 1.2rem;
     --box-shadow: 0 2rem 3rem var(--color-light);
 }
-*{ 
+*{
     margin: 0;
     padding: 0;
     outline: 0;
@@ -116,7 +115,8 @@ aside .top{
     background: white;
     display: flex;
     justify-content: space-around;
-    margin-top: 1.4rem;
+    margin-top: 6rem;
+    position: fixed;
 }
 aside .logo {
     display: flex;
@@ -135,9 +135,10 @@ aside .sidebar{
     border-radius: 1rem;
     display: flex;
     flex-direction: column;
-    height: 86vh;
-    position: relative;
-    top: 3rem;
+    height: 80vh;
+    position: fixed;
+    top: 11rem;
+    padding-right: 20px;
 }
 aside h3{
     font-weight: 500;
@@ -155,10 +156,10 @@ aside .sidebar a{
 aside .sidebar a span{
     font-size: 1.6rem;
     transition: all 300ms ease;
-} 
+}
 aside .sidebar a:last-child{
     position: absolute;
-    bottom: 2rem; 
+    bottom: 2rem;
     width: 100%;
 }
 aside .sidebar a.active{
@@ -198,7 +199,6 @@ aside .sidebar .message-count {
     margin-top: 100px;
     padding-bottom: 160px;
     padding-top: 100px;
-    padding-left: 100px;
     margin-inline-end: 60px;
     border-radius: 10px;
     max-width: 90%;
@@ -209,20 +209,20 @@ aside .sidebar .message-count {
     flex-direction: column;
 }
 .post-title {
-    font-size: 24px; 
+    font-size: 24px;
     width: 600px;
     border: 1.5px solid black;
     font-weight: bold;
     text-align: center;
-  }
+}
 ::placeholder {
     color: #0d043e;
 }
 .post-subject {
     font-size: 22px;
     border: 2px solid black;
-    width: 100%; 
-    height: 100px; 
+    width: 100%;
+    height: 100px;
     text-align: center;
 }
 ::placeholder {
@@ -240,7 +240,6 @@ aside .sidebar .message-count {
     cursor: pointer;
 }
 .pill-submit {
-    margin-left: 150px;
     width: 100px;
     height: 30px;
     font-weight: 600;

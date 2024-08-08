@@ -1,9 +1,8 @@
 import { navigateTo } from './router.js';
-
 export const sendRequest = async (url, method, body = null) => {
     const headers = new Headers();
     headers.append('Content-Type', 'application/json');
-
+    
     // Get session token from cookies
     const sessionToken = document.cookie.split('; ').find(row => row.startsWith('session_token='));
     if (sessionToken) {
@@ -26,31 +25,31 @@ export const sendRequest = async (url, method, body = null) => {
 
 export const getCategories = async () => {
     const response = await sendRequest("/api/get-categories", "GET");
-
     if (!response.ok) {
         throw new Error("Failed to fetch categories");
     }
     return await response.json();
 };
-
-export const createPost = async (body) => {
-    const response = await sendRequest("/api/create-post", "POST", body);
-    return response;
+export const createPost = async (post) => {
+    return fetch('/api/create-post', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(post)
+    });
 };
 
 export const createCategory = async (body) => {
     const response = await sendRequest("/api/create-category", "POST", body);
     return response;
 };
-
 export const sendMessage = async (body) => {
     const response = await sendRequest("/api/send-message", "POST", body);
     return response;
 };
-
 export const getPosts = async () => {
     const response = await sendRequest("/api/get-posts", "GET");
-
     if (!response.ok) {
         throw new Error("Failed to fetch posts");
     }

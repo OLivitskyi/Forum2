@@ -1,4 +1,3 @@
-// Function to set a form message (success or error)
 export const setFormMessage = (messageElement, type, message) => {
     if (messageElement) {
         messageElement.textContent = message;
@@ -7,7 +6,6 @@ export const setFormMessage = (messageElement, type, message) => {
     }
 };
 
-// Function to set input error message
 export const setInputError = (inputElement, message) => {
     inputElement.classList.add("form__input--error");
     const errorMessageElement = inputElement.parentElement.querySelector(".form__input-error-message");
@@ -16,7 +14,6 @@ export const setInputError = (inputElement, message) => {
     }
 };
 
-// Function to clear input error message
 export const clearInputError = (inputElement) => {
     inputElement.classList.remove("form__input--error");
     const errorMessageElement = inputElement.parentElement.querySelector(".form__input-error-message");
@@ -25,7 +22,6 @@ export const clearInputError = (inputElement) => {
     }
 };
 
-// Function to handle switching between login and create account forms
 export const setupFormSwitching = () => {
     const loginForm = document.querySelector("#login");
     const createAccountForm = document.querySelector("#createAccount");
@@ -45,7 +41,6 @@ export const setupFormSwitching = () => {
     }
 };
 
-// Function to setup form validation
 export const setupFormValidation = () => {
     document.querySelectorAll(".form__input").forEach(inputElement => {
         inputElement.addEventListener("blur", e => {

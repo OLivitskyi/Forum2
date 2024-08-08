@@ -14,9 +14,6 @@ func MainPageHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		tmpl.Execute(w, nil)
 	}
-	if r.Method == "POST" {
-		LoginProcess(w, r)
-	}
 }
 
 func SignupHandler(w http.ResponseWriter, r *http.Request) {
@@ -34,7 +31,7 @@ func SignupHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func HomepageHandler(w http.ResponseWriter, r *http.Request) {
-	if SessionExpired(r) {
+	if SessionExpired(w, r) {
 		http.Redirect(w, r, "/", http.StatusFound)
 		return
 	}
@@ -42,7 +39,7 @@ func HomepageHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Page not found.", http.StatusNotFound)
 		return
 	}
-	username := ValidateSession(r)
+	username := ValidateSession(w, r)
 	if username == "" {
 		http.Redirect(w, r, "/", http.StatusFound)
 		return
@@ -53,8 +50,8 @@ func HomepageHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func ValidateSessionHandler(w http.ResponseWriter, r *http.Request) {
-	username := ValidateSession(r)
-	if username != "" && !SessionExpired(r) {
+	username := ValidateSession(w, r)
+	if username != "" && !SessionExpired(w, r) {
 		w.WriteHeader(http.StatusOK)
 	} else {
 		w.WriteHeader(http.StatusUnauthorized)
@@ -66,7 +63,7 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Page not found.", http.StatusNotFound)
 		return
 	}
-	user := ValidateSession(r)
+	user := ValidateSession(w, r)
 	if user != "" {
 		CloseSession(w, r)
 	}

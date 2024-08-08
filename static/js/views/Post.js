@@ -1,13 +1,12 @@
 import AbstractView from "./AbstractView.js";
-
+import { getLayoutHtml } from "./layout.js";
 export default class extends AbstractView {
-  constructor(params) {
-    super(params);
-    this.setTitle("Post");
-  }
-
-  async getHtml() {
-    return `
+    constructor(params) {
+        super(params);
+        this.setTitle("Post");
+    }
+    async getHtml() {
+        const content = `
       <div id="post-container">
         <!-- Post content will be dynamically loaded here -->
       </div>
@@ -20,5 +19,6 @@ export default class extends AbstractView {
         <button type="submit">Add Comment</button>
       </form>
     `;
-  }
+    return getLayoutHtml(content);
+    }
 }

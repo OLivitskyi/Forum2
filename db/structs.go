@@ -90,7 +90,9 @@ type Session struct {
 	Username     string    `json:"username"`
 	SessionToken string    `json:"session_token"`
 	ExpireTime   time.Time `json:"expire_time"`
+	UserID       uuid.UUID `json:"user_id"`
 }
+
 type ReactionMessage struct {
 	UserID       uuid.UUID    `json:"user_id"`
 	PostID       uuid.UUID    `json:"post_id,omitempty"`

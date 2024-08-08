@@ -4,8 +4,9 @@ import Registration from "./views/Registration.js";
 import CreatePost from "./views/CreatePost.js";
 import Messages from "./views/Messages.js";
 import CreatePostCategory from "./views/CreatePostCategory.js";
+import PostDetails from "./views/Post.js";
 import { isAuthenticated } from './auth.js';
-import { handleLoginFormSubmit, handleLogout, handleCreatePostFormSubmit, setupMessageForm, handleCreateCategoryFormSubmit } from './eventHandlers.js';
+import { handleLoginFormSubmit, handleLogout, handleCreatePostFormSubmit, handleCreateCategoryFormSubmit, setupWebSocketHandlers } from './eventHandlers.js';
 import { showError, clearError } from './errorHandler.js';
 import { setInputError, clearInputError, setupFormSwitching, setupFormValidation } from './formHandler.js';
 
@@ -27,8 +28,16 @@ export const navigateTo = url => {
     router();
 };
 
+// Function to navigate to post details
+export const navigateToPostDetails = postId => {
+    const url = `/post/${postId}`;
+    history.pushState(null, null, url);
+    router();
+}
+
 // Main router function to handle route changes
 export const router = async () => {
+    console.log("Routing started"); 
     const routes = [
         { path: "/", view: Login },
         { path: "/registration", view: Registration },
@@ -36,9 +45,10 @@ export const router = async () => {
         { path: "/logout", view: Login },
         { path: "/create-post", view: CreatePost, protected: true },
         { path: "/messages", view: Messages, protected: true },
-        { path: "/create-category", view: CreatePostCategory, protected: true }
+        { path: "/create-category", view: CreatePostCategory, protected: true },
+        { path: "/post/:id", view: PostDetails }
     ];
-    
+
     // Find the matching route
     const potentialMatches = routes.map(route => {
         return {
@@ -59,6 +69,7 @@ export const router = async () => {
     if (match.route.protected) {
         const auth = await isAuthenticated();
         if (!auth) {
+            console.log("User not authenticated, redirecting to login");
             navigateTo("/");
             return;
         }
@@ -71,13 +82,15 @@ export const router = async () => {
         view.postRender();
     }
 
+    console.log(`View for ${location.pathname} loaded`);
+
     // Call setup functions after view is loaded
-    handleLoginFormSubmit(clearError, showError);
+    handleLoginFormSubmit();
     handleLogout();
     setupFormSwitching();
     setupFormValidation();
     handleCreatePostFormSubmit(clearError, showError);
-    setupMessageForm();
+    setupWebSocketHandlers();
 
     // Toggle category selection for post creation
     document.querySelectorAll(".pill").forEach(pill => {
@@ -91,6 +104,26 @@ export const router = async () => {
             console.log("messages clicked");
             e.preventDefault();
             navigateTo("/messages");
+        });
+    }
+
+    // Create post event handler
+    let createpost = document.getElementById("create-post");
+    if (createpost) {
+        createpost.addEventListener("click", async e => {
+            console.log("create post clicked");
+            e.preventDefault();
+            navigateTo("/create-post");
+        });
+    }
+
+    // Create category event handler
+    let createcategory = document.getElementById("create-category");
+    if (createcategory) {
+        createcategory.addEventListener("click", async e => {
+            console.log("create category clicked");
+            e.preventDefault();
+            navigateTo("/create-category");
         });
     }
 
@@ -151,11 +184,13 @@ window.addEventListener("popstate", router);
 
 // Initial setup and event listeners
 document.addEventListener("DOMContentLoaded", () => {
-    document.body.addEventListener("click", e => {
+    const handleLinkClick = (e) => {
         if (e.target.matches("[data-link]")) {
             e.preventDefault();
             navigateTo(e.target.href);
         }
-    });
+    };
+
+    document.body.addEventListener("click", handleLinkClick);
     router();
 });

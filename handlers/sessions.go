@@ -13,20 +13,27 @@ var sessions = map[string]db.Session{}
 
 // NewSession creates a new session for the user
 func NewSession(w http.ResponseWriter, username string, userID uuid.UUID) (string, error) {
-	if isSessionUp(username) {
-		return "", nil
+	existingSession, err := db.GetSessionByUserID(userID)
+	if err == nil && existingSession.SessionToken != "" {
+		log.Println("Existing session found for user:", username)
+		return existingSession.SessionToken, nil
 	}
+
 	token, err := uuid.NewV4()
 	if err != nil {
 		log.Fatalf("Failed to generate UUID: %v", err)
 		return "", err
 	}
+
 	session := db.Session{
 		Username:     username,
 		SessionToken: token.String(),
 		ExpireTime:   time.Now().Add(100 * time.Minute),
+		UserID:       userID,
 	}
+	log.Printf("Creating session for user %s with token %s", username, token.String())
 	sessions[token.String()] = session
+
 	expiration := time.Now().Add(4 * time.Hour)
 	cookie := http.Cookie{
 		Name:     "session_token",
@@ -36,11 +43,13 @@ func NewSession(w http.ResponseWriter, username string, userID uuid.UUID) (strin
 		HttpOnly: true,
 	}
 	http.SetCookie(w, &cookie)
+
 	err = db.SaveSession(token.String(), userID, expiration)
 	if err != nil {
 		log.Fatalf("Failed to save session to database: %v", err)
 		return "", err
 	}
+
 	log.Printf("New session created for user %s with token %s", username, token.String())
 	return token.String(), nil
 }
@@ -55,32 +64,43 @@ func isSessionUp(username string) bool {
 	return false
 }
 
-// ValidateSession validates the session from the request
-func ValidateSession(r *http.Request) string {
+func ValidateSession(w http.ResponseWriter, r *http.Request) string {
 	token, err := getSessionToken(r)
 	if err != nil {
 		log.Println("Session token not found:", err)
 		return ""
 	}
+	log.Printf("Session token found: %s", token)
 	key, ok := sessions[token]
 	if ok {
+		log.Printf("Session valid for user: %s", key.Username)
 		return key.Username
 	} else {
 		log.Printf("Invalid session token: %s", token)
+		userID, err := db.GetUserIDFromSession(token)
+		if err == nil {
+			log.Printf("Valid session token found in database for user ID: %s", userID)
+			return userID.String()
+		} else {
+			log.Printf("Session token not found in database: %v", err)
+		}
 		return ""
 	}
 }
 
 // SessionExpired checks if the session has expired
-func SessionExpired(r *http.Request) bool {
+func SessionExpired(w http.ResponseWriter, r *http.Request) bool {
 	token, err := getSessionToken(r)
 	if err != nil {
 		log.Println("Session token not found:", err)
 		return true
 	}
+	log.Printf("Session token for expiration check: %s", token)
 	key, ok := sessions[token]
 	if ok {
-		return key.ExpireTime.Before(time.Now())
+		isExpired := key.ExpireTime.Before(time.Now())
+		log.Printf("Session for user %s expired: %v", key.Username, isExpired)
+		return isExpired
 	}
 	return true
 }
@@ -115,11 +135,11 @@ func CloseSession(w http.ResponseWriter, r *http.Request) {
 // RequireLogin is a middleware that checks for a valid session
 func RequireLogin(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if SessionExpired(r) {
+		if SessionExpired(w, r) {
 			http.Error(w, "Session expired", http.StatusUnauthorized)
 			return
 		}
-		username := ValidateSession(r)
+		username := ValidateSession(w, r)
 		if username == "" {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return

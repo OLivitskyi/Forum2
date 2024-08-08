@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
 	"forum/db"
 	"log"
 	"net/http"
@@ -37,10 +36,6 @@ func CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Println("Title:", requestData.Title)
-	fmt.Println("Content:", requestData.Content)
-	fmt.Println("Category IDs:", requestData.CategoryIDs)
-
 	if requestData.Title == "" || requestData.Content == "" || len(requestData.CategoryIDs) == 0 {
 		http.Error(w, "Title, content and at least one category are required", http.StatusBadRequest)
 		return
@@ -61,7 +56,17 @@ func CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to create post", http.StatusInternalServerError)
 		return
 	}
+
+	post, err := db.GetPostByTitleAndContent(requestData.Title, requestData.Content)
+	if err != nil {
+		http.Error(w, "Failed to retrieve post", http.StatusInternalServerError)
+		return
+	}
+
+	broadcast <- post
+
 	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(post)
 }
 
 // CreateCommentHandler handles comment creation

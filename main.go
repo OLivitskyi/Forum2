@@ -14,23 +14,26 @@ func main() {
 		fmt.Println("failed to connect to database in main.go")
 		log.Fatal(err)
 	}
+	err = db.ClearSessions()
+	if err != nil {
+		log.Fatalf("Failed to clear sessions: %v", err)
+	}
+
+	handlers.InitWebSocketHandler()
 
 	// Serve static files
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
-
 	// Page routes
 	http.HandleFunc("/", handlers.MainPageHandler)
 	http.HandleFunc("/registration", handlers.SignupHandler)
 	http.HandleFunc("/homepage", handlers.HomepageHandler)
 	http.HandleFunc("/logout", handlers.LogoutHandler)
-
 	// API routes
+	http.HandleFunc("/api/login", handlers.LoginHandler) // Доданий ендпоінт для логіну
 	http.HandleFunc("/api/validate-session", handlers.ValidateSessionHandler)
-
 	http.Handle("/api/create-category", handlers.RequireLogin(http.HandlerFunc(handlers.CreateCategoryHandler)))
 	http.Handle("/api/get-categories", handlers.RequireLogin(http.HandlerFunc(handlers.GetCategoriesHandler)))
 	http.Handle("/api/get-category", handlers.RequireLogin(http.HandlerFunc(handlers.GetCategoryByIDHandler)))
-
 	http.Handle("/api/create-post", handlers.RequireLogin(http.HandlerFunc(handlers.CreatePostHandler)))
 	http.Handle("/api/create-comment", handlers.RequireLogin(http.HandlerFunc(handlers.CreateCommentHandler)))
 	http.Handle("/api/get-posts", handlers.RequireLogin(http.HandlerFunc(handlers.GetPostsHandler)))
@@ -45,7 +48,7 @@ func main() {
 	http.Handle("/api/add-comment-reaction", handlers.RequireLogin(http.HandlerFunc(handlers.AddCommentReactionHandler)))
 
 	// WebSocket handler
-	handlers.WebSocketHandler()
+	http.HandleFunc("/ws", handlers.WebSocketHandler)
 
 	fmt.Printf("Starting server at port 8080\n")
 	fmt.Printf("Go to http://localhost:8080/\n")

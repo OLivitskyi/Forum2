@@ -67,7 +67,7 @@ CREATE TABLE IF NOT EXISTS sessions (
 	token TEXT NOT NULL,
 	user_id UUID NOT NULL,
 	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-	expires_at INTEGER NOT NULL,
+	expires_at TIMESTAMP NOT NULL,
 	FOREIGN KEY(user_id) REFERENCES users(user_id)
 );
 CREATE TABLE IF NOT EXISTS messages (
@@ -166,7 +166,6 @@ func CreatePostDB(db *sql.DB, userID uuid.UUID, subject, content string, categor
 	}
 	return tx.Commit()
 }
-
 func GetPosts() ([]Post, error) {
 	rows, err := DB.Query(`
         SELECT p.post_id, p.user_id, p.subject, p.content, p.created_at, 
@@ -181,7 +180,6 @@ func GetPosts() ([]Post, error) {
 		return nil, err
 	}
 	defer rows.Close()
-
 	var posts []Post
 	for rows.Next() {
 		var p Post
@@ -190,39 +188,32 @@ func GetPosts() ([]Post, error) {
 			log.Printf("Error scanning row: %v", err)
 			return nil, err
 		}
-
 		user, err := GetUserByID(p.UserID)
 		if err != nil {
 			log.Printf("Error getting user by ID: %v", err)
 			return nil, err
 		}
 		p.User = user
-
 		categories, err := GetPostCategories(p.ID)
 		if err != nil {
 			log.Printf("Error getting post categories: %v", err)
 			return nil, err
 		}
 		p.Categories = convertToCategoryPointers(categories)
-
 		comments, err := GetComments(p.ID)
 		if err != nil {
 			log.Printf("Error getting comments: %v", err)
 			return nil, err
 		}
 		p.Comments = convertToCommentPointers(comments)
-
 		posts = append(posts, p)
 	}
-
 	if err = rows.Err(); err != nil {
 		log.Printf("Error iterating over rows: %v", err)
 		return nil, err
 	}
-
 	return posts, nil
 }
-
 func convertToCategoryPointers(categories []Category) []*Category {
 	var categoryPointers []*Category
 	for i := range categories {
@@ -423,6 +414,7 @@ func GetUsersOrderedByLastMessageOrAlphabetically() ([]User, error) {
 	}
 	return users, nil
 }
+
 func GetUserIDFromSession(token string) (uuid.UUID, error) {
 	if DB == nil {
 		return uuid.Nil, fmt.Errorf("db connection failed")
@@ -436,6 +428,7 @@ func GetUserIDFromSession(token string) (uuid.UUID, error) {
 	log.Printf("Session token found for user ID: %s", userID)
 	return userID, nil
 }
+
 func MarkMessageAsRead(messageID uuid.UUID, userID uuid.UUID) error {
 	if DB == nil {
 		return fmt.Errorf("db connection failed")
@@ -460,12 +453,13 @@ func SaveSession(token string, userID uuid.UUID, expiration time.Time) error {
 		return err
 	}
 	defer stmt.Close()
-	_, err = stmt.Exec(token, userID, expiration.Unix())
+	_, err = stmt.Exec(token, userID, expiration)
 	if err != nil {
 		return err
 	}
 	return nil
 }
+
 func DeleteSession(token string) error {
 	if DB == nil {
 		return fmt.Errorf("db connection failed")
@@ -562,4 +556,100 @@ func GetCategoryByID(id int) (*Category, error) {
 		return nil, err
 	}
 	return &category, nil
+}
+
+func GetSessionByUserID(userID uuid.UUID) (*Session, error) {
+	var session Session
+	err := DB.QueryRow(`SELECT token, user_id, expires_at FROM sessions WHERE user_id = ?`, userID).Scan(
+		&session.SessionToken, &session.UserID, &session.ExpireTime)
+	if err != nil {
+		log.Printf("Error finding session for user ID %s: %v", userID, err)
+		return nil, err
+	}
+	log.Printf("Session token found for user ID: %s", session.UserID)
+	return &session, nil
+}
+
+func ClearSessions() error {
+	if DB == nil {
+		return fmt.Errorf("db connection failed")
+	}
+	_, err := DB.Exec("DELETE FROM sessions")
+	if err != nil {
+		return fmt.Errorf("failed to clear sessions: %v", err)
+	}
+	log.Println("All sessions have been cleared from the database")
+	return nil
+}
+
+func GetPostByTitleAndContent(title, content string) (*Post, error) {
+	var post Post
+	err := DB.QueryRow(`
+		SELECT p.post_id, p.user_id, p.subject, p.content, p.created_at, 
+		       COALESCE(SUM(CASE WHEN pr.type = 'like' THEN 1 ELSE 0 END), 0) AS like_count,
+		       COALESCE(SUM(CASE WHEN pr.type = 'dislike' THEN 1 ELSE 0 END), 0) AS dislike_count
+		FROM posts p
+		LEFT JOIN likes pr ON p.post_id = pr.post_id
+		WHERE p.subject = ? AND p.content = ?
+		GROUP BY p.post_id
+		ORDER BY p.created_at DESC`, title, content).Scan(&post.ID, &post.UserID, &post.Subject, &post.Content, &post.CreatedAt, &post.LikeCount, &post.DislikeCount)
+	if err != nil {
+		return nil, err
+	}
+
+	user, err := GetUserByID(post.UserID)
+	if err != nil {
+		return nil, err
+	}
+	post.User = user
+
+	categories, err := GetPostCategories(post.ID)
+	if err != nil {
+		return nil, err
+	}
+	post.Categories = convertToCategoryPointers(categories)
+
+	comments, err := GetComments(post.ID)
+	if err != nil {
+		return nil, err
+	}
+	post.Comments = convertToCommentPointers(comments)
+
+	return &post, nil
+}
+
+func GetPostByID(postID uuid.UUID) (*Post, error) {
+	var post Post
+	err := DB.QueryRow(`
+		SELECT p.post_id, p.user_id, p.subject, p.content, p.created_at, 
+		       COALESCE(SUM(CASE WHEN pr.type = 'like' THEN 1 ELSE 0 END), 0) AS like_count,
+		       COALESCE(SUM(CASE WHEN pr.type = 'dislike' THEN 1 ELSE 0 END), 0) AS dislike_count
+		FROM posts p
+		LEFT JOIN likes pr ON p.post_id = pr.post_id
+		WHERE p.post_id = ?
+		GROUP BY p.post_id
+		ORDER BY p.created_at DESC`, postID).Scan(&post.ID, &post.UserID, &post.Subject, &post.Content, &post.CreatedAt, &post.LikeCount, &post.DislikeCount)
+	if err != nil {
+		return nil, err
+	}
+
+	user, err := GetUserByID(post.UserID)
+	if err != nil {
+		return nil, err
+	}
+	post.User = user
+
+	categories, err := GetPostCategories(post.ID)
+	if err != nil {
+		return nil, err
+	}
+	post.Categories = convertToCategoryPointers(categories)
+
+	comments, err := GetComments(post.ID)
+	if err != nil {
+		return nil, err
+	}
+	post.Comments = convertToCommentPointers(comments)
+
+	return &post, nil
 }
