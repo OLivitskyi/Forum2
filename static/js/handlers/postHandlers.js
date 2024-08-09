@@ -1,4 +1,4 @@
-import { navigateTo } from '../routeUtils.js';
+import { navigateTo,navigateToPostDetails } from '../routeUtils.js';
 import { createPost, getPosts, getPost, getCategories } from '../api.js'; 
 import { showError, clearError } from '../errorHandler.js';
 import { sendPost, connectWebSocket } from '../websocket.js';
