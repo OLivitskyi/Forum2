@@ -1,7 +1,8 @@
-import { navigateTo,navigateToPostDetails } from '../routeUtils.js';
-import { createPost, getPosts, getPost, getCategories } from '../api.js'; 
+import { navigateTo, navigateToPostDetails } from '../routeUtils.js';
+import { createPost, getPosts, getPost } from '../api.js';
 import { showError, clearError } from '../errorHandler.js';
-import { sendPost, connectWebSocket } from '../websocket.js';
+import { sendPost } from '../websocket.js';
+import { loadAndRenderComments } from './commentHandlers.js';
 
 export const handleCreatePostFormSubmit = (clearError, showError) => {
     const form = document.getElementById("create-post-form");
@@ -36,12 +37,7 @@ async function handleCreatePostSubmit(e) {
             const post = await response.json();
             console.log("Post created, sending via WebSocket:", post);
             
-            // Дочекайтесь відкриття WebSocket з'єднання перед відправкою посту
-            if (socket && socket.readyState === WebSocket.OPEN) {
-                sendPost(post);
-            } else {
-                console.error("WebSocket is not connected. Cannot send post.");
-            }
+            sendPost(post);
         } else {
             const errorText = await response.text();
             showError(errorText || "Failed to create post");
@@ -82,8 +78,17 @@ export const loadAndRenderSinglePost = async (postId) => {
     try {
         console.log("Loading post details for post ID:", postId);
         const postContainer = document.getElementById("single-post-container");
-        if (!postContainer) return;
+        if (!postContainer) {
+            console.error("Post container not found");
+            return;
+        }
+
         const post = await getPost(postId);
+        if (!post) {
+            console.error("Post data is missing");
+            return;
+        }
+
         postContainer.innerHTML = `
             <div>
                 <div>${post.subject}</div>
@@ -94,48 +99,8 @@ export const loadAndRenderSinglePost = async (postId) => {
                 </div>
             </div>
         `;
+        await loadAndRenderComments(postId); // Завантаження та відображення коментарів
     } catch (error) {
         console.error("Failed to load post:", error);
-    }
-};
-
-export const loadAndRenderComments = async (postId) => {
-    try {
-        const commentsContainer = document.getElementById("comments-container");
-        if (!commentsContainer) return;
-        const comments = await getComments(postId);
-        commentsContainer.innerHTML = "";
-        comments.forEach(comment => {
-            const commentElement = document.createElement("div");
-            commentElement.classList.add("comment");
-            commentElement.innerHTML = `
-                <h4>${comment.author}</h4>
-                <p>${comment.content}</p>
-            `;
-            commentsContainer.appendChild(commentElement);
-        });
-    } catch (error) {
-        console.error("Failed to load comments:", error);
-    }
-};
-
-export const loadCategories = async () => {
-    try {
-        const categorySelect = document.getElementById("category-select");
-        if (!categorySelect) return;
-        categorySelect.innerHTML = '<option value="">Select a category</option>';
-        const categories = await getCategories();
-        categories.forEach(category => {
-            const option = document.createElement("option");
-            option.value = category.id;
-            option.textContent = category.name;
-            categorySelect.appendChild(option);
-        });
-    } catch (error) {
-        console.error("Failed to load categories:", error);
-        const messageElement = document.getElementById("category-message");
-        if (messageElement) {
-            setFormMessage(messageElement, "error", error.message || "Failed to load categories");
-        }
     }
 };

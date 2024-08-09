@@ -51,23 +51,63 @@ export const sendMessage = async (body) => {
 };
 
 export const getPosts = async () => {
-    const response = await sendRequest("/api/get-posts", "GET");
-    if (!response.ok) {
-        throw new Error("Failed to fetch posts");
+    const response = await sendRequest("/api/posts", "GET");
+    if (!response || !response.ok) {
+        const errorText = await response.text();
+        throw new Error("Failed to fetch posts: " + errorText);
     }
     return await response.json();
 };
 
-export const getPost = async (body) => {
-    const response = await fetch("/api/get-post", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify(body)
-    });
-    if (!response.ok) {
-        throw new Error("Failed to fetch post");
+export const getPost = async (postId) => {
+    const response = await sendRequest(`/api/get-post/${postId}`, "GET");
+    if (!response || !response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to fetch post: ${errorText}`);
     }
     return await response.json();
 };
+
+export const createComment = async (comment) => {
+    const response = await sendRequest(`/api/post/comments/new`, "POST", comment);
+
+    if (response.status === 201) {
+        console.log("Comment created successfully.");
+        return {}; 
+    }
+
+    if (!response || !response.ok) {
+        const errorText = await response.text();
+        throw new Error("Failed to create comment: " + errorText);
+    }
+
+    const responseText = await response.text();
+    if (responseText.trim() === "") {
+        throw new Error("Empty response from the server");
+    }
+
+    try {
+        return JSON.parse(responseText);
+    } catch (error) {
+        throw new Error("Failed to parse JSON response: " + error.message);
+    }
+};
+
+export const getComments = async (postId) => {
+    if (!validateUUID(postId)) {
+        throw new Error("Invalid post ID format");
+    }
+
+    const response = await sendRequest(`/api/post-comments/${postId}`, "GET");
+    if (!response || !response.ok) {
+        const errorText = await response.text();
+        throw new Error("Failed to fetch comments: " + errorText);
+    }
+
+    return response.json();
+};
+
+function validateUUID(uuid) {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    return uuidRegex.test(uuid);
+}

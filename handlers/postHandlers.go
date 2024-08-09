@@ -63,7 +63,6 @@ func CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Створюємо повідомлення типу PostMessage і відправляємо його в канал broadcast
 	postMessage := PostMessage{
 		MessageID: uuid.Must(uuid.NewV4()),
 		Post:      *post,
@@ -75,189 +74,63 @@ func CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(post)
 }
 
-// CreateCommentHandler handles comment creation
-func CreateCommentHandler(w http.ResponseWriter, r *http.Request) {
-	userID, err := getUserIDFromSession(r)
-	if err != nil {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return
-	}
-
-	if r.Header.Get("Content-Type") != "application/json" {
-		http.Error(w, "Content-Type must be application/json", http.StatusUnsupportedMediaType)
-		return
-	}
-
-	var requestData struct {
-		PostID  string `json:"post_id"`
-		Content string `json:"content"`
-	}
-
-	err = json.NewDecoder(r.Body).Decode(&requestData)
-	if err != nil {
-		http.Error(w, "Invalid JSON data", http.StatusBadRequest)
-		return
-	}
-
-	if requestData.PostID == "" || requestData.Content == "" {
-		http.Error(w, "Post ID and content are required", http.StatusBadRequest)
-		return
-	}
-
-	postID, err := uuid.FromString(requestData.PostID)
-	if err != nil {
-		http.Error(w, "Invalid post ID", http.StatusBadRequest)
-		return
-	}
-
-	err = db.CreateComment(postID, userID, requestData.Content)
-	if err != nil {
-		http.Error(w, "Failed to create comment", http.StatusInternalServerError)
-		return
-	}
-	w.WriteHeader(http.StatusCreated)
-}
-
-// GetPostsHandler handles fetching posts
 func GetPostsHandler(w http.ResponseWriter, r *http.Request) {
+	log.Println("Received request to get posts")
+
 	posts, err := db.GetPosts()
 	if err != nil {
 		log.Printf("Error getting posts: %v", err)
 		http.Error(w, "Failed to get posts", http.StatusInternalServerError)
 		return
 	}
+
+	// Перевірка на наявність постів
+	if posts == nil {
+		log.Println("No posts found")
+		http.Error(w, "No posts found", http.StatusNotFound)
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(posts)
-}
-
-// GetCommentsHandler handles fetching comments for a post
-func GetCommentsHandler(w http.ResponseWriter, r *http.Request) {
-	postIDStr := r.URL.Query().Get("post_id")
-	if postIDStr == "" {
-		http.Error(w, "Post ID is required", http.StatusBadRequest)
-		return
-	}
-	postID, err := uuid.FromString(postIDStr)
+	err = json.NewEncoder(w).Encode(posts)
 	if err != nil {
-		http.Error(w, "Invalid post ID", http.StatusBadRequest)
-		return
-	}
-	comments, err := db.GetComments(postID)
-	if err != nil {
-		http.Error(w, "Failed to get comments", http.StatusInternalServerError)
-		return
-	}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(comments)
-}
-
-// AddPostReactionHandler handles adding reactions to posts
-func AddPostReactionHandler(w http.ResponseWriter, r *http.Request) {
-	userID, err := getUserIDFromSession(r)
-	if err != nil {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		log.Printf("Error encoding posts to JSON: %v", err)
+		http.Error(w, "Failed to encode posts to JSON", http.StatusInternalServerError)
 		return
 	}
 
-	if r.Header.Get("Content-Type") != "application/json" {
-		http.Error(w, "Content-Type must be application/json", http.StatusUnsupportedMediaType)
-		return
-	}
-
-	var requestData struct {
-		PostID       string `json:"post_id"`
-		ReactionType string `json:"type"`
-	}
-
-	err = json.NewDecoder(r.Body).Decode(&requestData)
-	if err != nil {
-		http.Error(w, "Invalid JSON data", http.StatusBadRequest)
-		return
-	}
-
-	if requestData.PostID == "" || requestData.ReactionType == "" {
-		http.Error(w, "Post ID and reaction type are required", http.StatusBadRequest)
-		return
-	}
-
-	postID, err := uuid.FromString(requestData.PostID)
-	if err != nil {
-		http.Error(w, "Invalid post ID", http.StatusBadRequest)
-		return
-	}
-
-	err = db.AddPostReaction(userID, postID, db.ReactionType(requestData.ReactionType))
-	if err != nil {
-		http.Error(w, "Failed to add reaction", http.StatusInternalServerError)
-		return
-	}
-	w.WriteHeader(http.StatusOK)
-}
-
-// AddCommentReactionHandler handles adding reactions to comments
-func AddCommentReactionHandler(w http.ResponseWriter, r *http.Request) {
-	userID, err := getUserIDFromSession(r)
-	if err != nil {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return
-	}
-
-	if r.Header.Get("Content-Type") != "application/json" {
-		http.Error(w, "Content-Type must be application/json", http.StatusUnsupportedMediaType)
-		return
-	}
-
-	var requestData struct {
-		CommentID    string `json:"comment_id"`
-		ReactionType string `json:"type"`
-	}
-
-	err = json.NewDecoder(r.Body).Decode(&requestData)
-	if err != nil {
-		http.Error(w, "Invalid JSON data", http.StatusBadRequest)
-		return
-	}
-
-	if requestData.CommentID == "" || requestData.ReactionType == "" {
-		http.Error(w, "Comment ID and reaction type are required", http.StatusBadRequest)
-		return
-	}
-
-	commentID, err := uuid.FromString(requestData.CommentID)
-	if err != nil {
-		http.Error(w, "Invalid comment ID", http.StatusBadRequest)
-		return
-	}
-
-	err = db.AddCommentReaction(userID, commentID, db.ReactionType(requestData.ReactionType))
-	if err != nil {
-		http.Error(w, "Failed to add reaction", http.StatusInternalServerError)
-		return
-	}
-	w.WriteHeader(http.StatusOK)
+	log.Println("Successfully returned posts")
 }
 
 func GetPostHandler(w http.ResponseWriter, r *http.Request) {
-	var postID string
-	err := json.NewDecoder(r.Body).Decode(&postID)
-	if err != nil {
-		http.Error(w, "Invalid JSON data", http.StatusBadRequest)
+	postIDStr := r.URL.Path[len("/api/get-post/"):]
+	if postIDStr == "" {
+		log.Println("Post ID is missing in the request")
+		http.Error(w, "Post ID is required", http.StatusBadRequest)
 		return
 	}
 
-	parsedPostID, err := uuid.FromString(postID)
+	log.Printf("Fetching post with ID: %s", postIDStr)
+	postID, err := uuid.FromString(postIDStr)
 	if err != nil {
+		log.Printf("Invalid post ID format: %s", postIDStr)
 		http.Error(w, "Invalid post ID format", http.StatusBadRequest)
 		return
 	}
 
-	post, err := db.GetPostByID(parsedPostID)
+	post, err := db.GetPostByID(postID)
 	if err != nil {
-		log.Printf("Error getting post: %v", err)
+		log.Printf("Failed to get post: %v", err)
 		http.Error(w, "Failed to get post", http.StatusInternalServerError)
 		return
 	}
 
+	log.Printf("Successfully fetched post with ID: %s", postIDStr)
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(post)
+	err = json.NewEncoder(w).Encode(post)
+	if err != nil {
+		log.Printf("Error encoding post to JSON: %v", err)
+		http.Error(w, "Failed to encode post to JSON", http.StatusInternalServerError)
+		return
+	}
 }

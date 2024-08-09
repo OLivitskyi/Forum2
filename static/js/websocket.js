@@ -2,6 +2,7 @@ let socket;
 let messageHandler = () => {};
 let reactionHandler = () => {};
 let postHandler = () => {};
+let commentHandler = () => {};
 
 export const connectWebSocket = (sessionToken) => {
     if (!sessionToken) {
@@ -23,14 +24,22 @@ export const connectWebSocket = (sessionToken) => {
     socket.onmessage = (event) => {
         const message = JSON.parse(event.data);
         console.log("Received message:", message);
-        if (message.type === "message") {
-            messageHandler(message);
-        } else if (message.type === "reaction") {
-            reactionHandler(message);
-        } else if (message.type === "post") { // New post
-            postHandler(message.data); // Передаємо тільки дані посту
-        } else {
-            console.warn("Unknown message type:", message);
+
+        switch (message.type) {
+            case "message":
+                messageHandler(message);
+                break;
+            case "reaction":
+                reactionHandler(message);
+                break;
+            case "post":
+                postHandler(message.data); // Передаємо тільки дані посту
+                break;
+            case "comment":
+                commentHandler(message.data); // Передаємо тільки дані коментаря
+                break;
+            default:
+                console.warn("Unknown message type:", message);
         }
     };
 
@@ -53,6 +62,17 @@ export const sendPost = (post) => {
     }
 };
 
+export const sendComment = (comment) => {
+    if (socket && socket.readyState === WebSocket.OPEN) {
+        const message = { type: 'comment', data: comment };
+        console.log("Sending comment:", message);
+        socket.send(JSON.stringify(message));
+    } else {
+        console.error("WebSocket is not connected");
+    }
+};
+
+
 export const setMessageHandler = (handler) => {
     messageHandler = handler;
 };
@@ -65,9 +85,13 @@ export const setPostHandler = (handler) => {
     postHandler = handler;
 };
 
+export const setCommentHandler = (handler) => {
+    commentHandler = handler;
+};
+
 export const setupWebSocketHandlers = () => {
     setPostHandler((post) => {
-        console.log("Handling new post:", post); // Додано логування для перевірки
+        console.log("Handling new post:", post);
         const postsContainer = document.getElementById("posts-container");
         if (postsContainer) {
             const categories = post.categories.map(category => `<span class="category">${category.name}</span>`).join(', ');
@@ -83,6 +107,24 @@ export const setupWebSocketHandlers = () => {
                 </div>
             `;
             postsContainer.prepend(postElement);
+        }
+    });
+
+    setCommentHandler((comment) => {
+        console.log("Handling new comment:", comment);
+        const commentsContainer = document.getElementById("comments-container");
+        if (commentsContainer) {
+            const commentElement = document.createElement("div");
+            commentElement.classList.add("comment");
+            commentElement.innerHTML = `
+                <h4>${comment.user.username}</h4>
+                <p>${comment.content}</p>
+                <div>
+                    <span>Likes: ${comment.like_count}</span>
+                    <span>Dislikes: ${comment.dislike_count}</span>
+                </div>
+            `;
+            commentsContainer.appendChild(commentElement);
         }
     });
 };

@@ -66,6 +66,46 @@ func (pm PostMessage) Process() {
 	}
 }
 
+type CommentMessage struct {
+	MessageID uuid.UUID  `json:"message_id"`
+	Type      string     `json:"type"`
+	Comment   db.Comment `json:"comment"`
+	Timestamp time.Time  `json:"timestamp"`
+}
+
+func (cm CommentMessage) Process() {
+	log.Printf("Broadcasting new comment: %+v", cm.Comment)
+	mutex.Lock()
+	if _, exists := processedMessages[cm.MessageID]; exists {
+		mutex.Unlock()
+		return
+	}
+	processedMessages[cm.MessageID] = struct{}{}
+	mutex.Unlock()
+
+	// Отримання коментаря за його ID
+	completeComment, err := db.GetCommentByID(cm.Comment.ID)
+	if err != nil {
+		log.Printf("Error fetching complete comment data: %v", err)
+		return
+	}
+	for client := range clients {
+		log.Printf("Sending comment to client: %v", clients[client])
+		message := map[string]interface{}{
+			"type": "comment",
+			"data": completeComment,
+		}
+		err := client.WriteJSON(message)
+		if err != nil {
+			log.Printf("Error writing to websocket: %v", err)
+			client.Close()
+			mutex.Lock()
+			delete(clients, client)
+			mutex.Unlock()
+		}
+	}
+}
+
 func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 	ws, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -113,23 +153,50 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 
 		log.Printf("Received message: %v", message)
 
-		if postType, ok := message["type"].(string); ok && postType == "post" {
-			var post db.Post
-			postData, _ := json.Marshal(message["data"])
-			if err := json.Unmarshal(postData, &post); err != nil {
-				log.Printf("Error unmarshalling post data: %v", err)
-				continue
+		if messageType, ok := message["type"].(string); ok {
+			switch messageType {
+			case "post":
+				var post db.Post
+				postData, _ := json.Marshal(message["data"])
+				if err := json.Unmarshal(postData, &post); err != nil {
+					log.Printf("Error unmarshalling post data: %v", err)
+					continue
+				}
+				log.Printf("Received post from user %s: %v", userID, post)
+				postMessage := PostMessage{
+					MessageID: uuid.Must(uuid.NewV4()),
+					Type:      "post",
+					Post:      post,
+					Timestamp: time.Now(),
+				}
+				broadcast <- postMessage
+			case "comment":
+				var comment db.Comment
+				commentData, _ := json.Marshal(message["data"])
+				if err := json.Unmarshal(commentData, &comment); err != nil {
+					log.Printf("Error unmarshalling comment data: %v", err)
+					continue
+				}
+
+				// Важливо: переконайтеся, що comment.ID встановлено правильно
+				if comment.ID == uuid.Nil {
+					log.Printf("Invalid comment ID: %v", comment.ID)
+					continue
+				}
+
+				log.Printf("Received comment from user %s: %v", userID, comment)
+				commentMessage := CommentMessage{
+					MessageID: uuid.Must(uuid.NewV4()),
+					Type:      "comment",
+					Comment:   comment,
+					Timestamp: time.Now(),
+				}
+				broadcast <- commentMessage
+			default:
+				log.Printf("Unknown message type: %v", messageType)
 			}
-			log.Printf("Received post from user %s: %v", userID, post)
-			postMessage := PostMessage{
-				MessageID: uuid.Must(uuid.NewV4()),
-				Type:      "post",
-				Post:      post,
-				Timestamp: time.Now(),
-			}
-			broadcast <- postMessage
 		} else {
-			log.Printf("Unknown message format: %v", message)
+			log.Printf("Message type not found in received message: %v", message)
 		}
 	}
 }
