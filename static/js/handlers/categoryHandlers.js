@@ -25,8 +25,8 @@ async function handleCreateCategorySubmit(e) {
         const response = await createCategory(body);
         if (response) {
             setFormMessage(messageElement, "success", "Category created successfully");
-            document.getElementById("category-name").value = ""; // Очищення поля введення
-            await loadCategories(); // Оновлення списку категорій
+            document.getElementById("category-name").value = "";
+            await loadCategories();
         } else {
             setFormMessage(messageElement, "error", "Failed to create category.");
         }

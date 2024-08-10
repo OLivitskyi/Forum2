@@ -53,11 +53,9 @@ func CreateCommentHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Генерація comment_id
 	commentID := uuid.Must(uuid.NewV4())
 	log.Printf("Generated comment ID: %s", commentID)
 
-	// Створення коментаря з використанням commentID
 	err = db.CreateCommentWithID(commentID, postID, userID, requestData.Content)
 	if err != nil {
 		http.Error(w, "Failed to create comment", http.StatusInternalServerError)
@@ -66,7 +64,6 @@ func CreateCommentHandler(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("Successfully created comment with ID: %s", commentID)
 
-	// Отримання новоствореного коментаря за його ID
 	newComment, err := db.GetCommentByID(commentID)
 	if err != nil {
 		log.Printf("Error retrieving comment by ID %s: %v", commentID, err)
@@ -81,9 +78,7 @@ func CreateCommentHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// GetCommentsHandler обробляє запити на отримання коментарів до конкретного посту
 func GetCommentsHandler(w http.ResponseWriter, r *http.Request) {
-	// Витягуємо ID посту з URL
 	postIDStr := strings.TrimPrefix(r.URL.Path, "/api/post-comments/")
 	if postIDStr == "" {
 		http.Error(w, "Missing post ID", http.StatusBadRequest)

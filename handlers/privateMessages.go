@@ -18,7 +18,6 @@ func SendMessageHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Перевірка заголовка Content-Type
 	if r.Header.Get("Content-Type") != "application/json" {
 		http.Error(w, "Content-Type must be application/json", http.StatusUnsupportedMediaType)
 		return
@@ -29,7 +28,6 @@ func SendMessageHandler(w http.ResponseWriter, r *http.Request) {
 		Content    string `json:"content"`
 	}
 
-	// Розбір JSON-запиту
 	err = json.NewDecoder(r.Body).Decode(&requestData)
 	if err != nil {
 		http.Error(w, "Invalid JSON data", http.StatusBadRequest)

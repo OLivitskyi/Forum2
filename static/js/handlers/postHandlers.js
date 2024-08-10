@@ -87,7 +87,7 @@ export const loadAndRenderPosts = async () => {
             const categories = post.categories.map(category => `<span class="category">${category.name}</span>`).join(', ');
             const postElement = document.createElement("div");
             postElement.classList.add("post");
-            postElement.id = `post-${post.id}`; // Додаємо ID до посту
+            postElement.id = `post-${post.id}`;
             postElement.innerHTML = `
                 <h3>${post.subject}</h3>
                 <p>${post.content}</p>

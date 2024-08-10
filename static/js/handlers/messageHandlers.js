@@ -1,6 +1,6 @@
 import { sendMessage } from '../websocket.js';
 import { showError, clearError } from '../errorHandler.js';
-import { navigateTo } from '../routeUtils.js'; // Оновлено шлях до routeUtils.js
+import { navigateTo } from '../routeUtils.js';
 
 export const setupMessageForm = () => {
     const messageForm = document.getElementById("message-form");

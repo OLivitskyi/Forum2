@@ -1,7 +1,6 @@
 import { getComments, createComment } from '../api.js';
 import { sendComment } from '../websocket.js';
 import { setFormMessage } from '../formHandler.js';
-import { showError, clearError } from '../errorHandler.js';
 
 export const handleCreateCommentFormSubmit = (postId, clearError, showError) => {
     const form = document.getElementById("create-comment-form");
@@ -36,14 +35,11 @@ async function handleCreateCommentSubmit(e, postId, clearError, showError) {
             clearError();
             console.log("Comment created successfully.");
 
-            // Показуємо повідомлення про успіх
             setFormMessage(messageElement, "success", "Comment added successfully");
 
-            // Очищуємо поле введення
             document.getElementById("content").value = "";
 
-            // Відправка коментаря через WebSocket
-            sendComment(response); // Передаємо об'єкт коментаря з ID
+            sendComment(response); 
         }
     } catch (error) {
         console.error("An error occurred while creating comment:", error);

@@ -4,7 +4,7 @@ export const sendRequest = async (url, method, body = null) => {
     const headers = new Headers();
     headers.append('Content-Type', 'application/json');
     
-    const sessionToken = localStorage.getItem('session_token'); // Отримуємо токен з localStorage
+    const sessionToken = localStorage.getItem('session_token'); 
     if (sessionToken) {
         headers.append('Authorization', `Bearer ${sessionToken}`);
     }
@@ -16,7 +16,7 @@ export const sendRequest = async (url, method, body = null) => {
     });
 
     if (response.status === 401) {
-        navigateTo("/"); // Перенаправлення на головну сторінку при неавторизованому доступі
+        navigateTo("/"); 
     }
 
     return response;
@@ -35,7 +35,7 @@ export const createPost = async (post) => {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('session_token')}` // Додаємо токен тут
+            'Authorization': `Bearer ${localStorage.getItem('session_token')}`
         },
         body: JSON.stringify(post)
     });
@@ -104,11 +104,10 @@ export const getComments = async (postId) => {
         
         const comments = await response.json();
         
-        // Переконайтесь, що повертається масив
         return Array.isArray(comments) ? comments : [];
     } catch (error) {
         console.error("Failed to get comments:", error);
-        return []; // Повертаємо порожній масив у випадку помилки
+        return [];
     }
 };
 

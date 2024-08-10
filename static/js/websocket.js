@@ -1,4 +1,3 @@
-// static/js/websocket.js
 import { navigateToPostDetails } from './routeUtils.js';
 
 let socket;
@@ -26,7 +25,6 @@ const connectWebSocket = () => {
         isConnected = true;
         reconnectAttempts = 0;
 
-        // Відправити повідомлення з черги
         while (messageQueue.length > 0) {
             const message = messageQueue.shift();
             sendMessage(message);
@@ -56,7 +54,7 @@ const connectWebSocket = () => {
         if (reconnectAttempts < maxReconnectAttempts) {
             reconnectAttempts++;
             console.log(`Attempting to reconnect... (${reconnectAttempts}/${maxReconnectAttempts})`);
-            setTimeout(connectWebSocket, 5000); // Відкладене перепідключення через 5 секунд
+            setTimeout(connectWebSocket, 5000);
         } else {
             console.error("Max reconnect attempts reached. Could not reconnect to WebSocket server.");
         }
@@ -76,7 +74,6 @@ const sendMessage = (message) => {
     }
 };
 
-// Обробка отриманих постів через WebSocket
 const handlePost = (post) => {
     const postsContainer = document.getElementById("posts-container");
     if (postsContainer) {
@@ -107,7 +104,6 @@ const handlePost = (post) => {
     }
 };
 
-// Обробка отриманих коментарів через WebSocket
 const handleComment = (comment) => {
     const commentsContainer = document.getElementById("comments-container");
     if (commentsContainer) {

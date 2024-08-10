@@ -84,7 +84,6 @@ func GetPostsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Перевірка на наявність постів
 	if posts == nil {
 		log.Println("No posts found")
 		http.Error(w, "No posts found", http.StatusNotFound)

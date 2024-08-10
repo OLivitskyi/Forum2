@@ -7,14 +7,11 @@ import (
 	"github.com/gofrs/uuid"
 )
 
-// CreateComment creates a new comment for a post.
-// CreateCommentWithID створює новий коментар з використанням наданого commentID.
 func CreateCommentWithID(commentID, postID, userID uuid.UUID, content string) error {
 	_, err := DB.Exec("INSERT INTO comments (comment_id, post_id, user_id, content, created_at) VALUES (?, ?, ?, ?, ?)", commentID, postID, userID, content, time.Now())
 	return err
 }
 
-// GetComments retrieves all comments for a given post.
 func GetComments(postID uuid.UUID) ([]Comment, error) {
 	log.Printf("Fetching comments for post ID: %s", postID)
 	rows, err := DB.Query(`
@@ -42,7 +39,6 @@ func GetComments(postID uuid.UUID) ([]Comment, error) {
 			log.Printf("Error scanning comment: %v", err)
 			return nil, err
 		}
-		// Ініціалізуємо структуру User перед використанням
 		c.User = &User{
 			Id:       c.UserID,
 			Username: username,
@@ -60,13 +56,11 @@ func GetComments(postID uuid.UUID) ([]Comment, error) {
 	return comments, nil
 }
 
-// AddCommentReaction adds a reaction to a comment.
 func AddCommentReaction(userID, commentID uuid.UUID, reactionType ReactionType) error {
 	_, err := DB.Exec("INSERT INTO likes (user_id, comment_id, type, created_at) VALUES (?, ?, ?, ?)", userID, commentID, reactionType, time.Now())
 	return err
 }
 
-// GetCommentReactions retrieves reactions for a given comment.
 func GetCommentReactions(commentID uuid.UUID) ([]Reaction, error) {
 	rows, err := DB.Query("SELECT user_id, comment_id, type FROM likes WHERE comment_id = ?", commentID)
 	if err != nil {
@@ -85,7 +79,6 @@ func GetCommentReactions(commentID uuid.UUID) ([]Reaction, error) {
 	return reactions, nil
 }
 
-// GetCommentByID retrieves a comment by its ID from the database.
 func GetCommentByID(commentID uuid.UUID) (*Comment, error) {
 	log.Printf("Attempting to fetch comment with ID: %s", commentID)
 

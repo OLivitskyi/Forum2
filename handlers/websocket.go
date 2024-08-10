@@ -83,7 +83,6 @@ func (cm CommentMessage) Process() {
 	processedMessages[cm.MessageID] = struct{}{}
 	mutex.Unlock()
 
-	// Отримання коментаря за його ID
 	completeComment, err := db.GetCommentByID(cm.Comment.ID)
 	if err != nil {
 		log.Printf("Error fetching complete comment data: %v", err)
@@ -178,7 +177,6 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 					continue
 				}
 
-				// Важливо: переконайтеся, що comment.ID встановлено правильно
 				if comment.ID == uuid.Nil {
 					log.Printf("Invalid comment ID: %v", comment.ID)
 					continue
