@@ -94,9 +94,16 @@ export const setupWebSocketHandlers = () => {
         console.log("Handling new post:", post);
         const postsContainer = document.getElementById("posts-container");
         if (postsContainer) {
+            // Перевіряємо, чи існує вже елемент з таким ID
+            if (document.getElementById(`post-${post.id}`)) {
+                console.warn(`Post with ID ${post.id} already exists, skipping`);
+                return;
+            }
+
             const categories = post.categories.map(category => `<span class="category">${category.name}</span>`).join(', ');
             const postElement = document.createElement("div");
             postElement.classList.add("post");
+            postElement.id = `post-${post.id}`; // Додаємо ID до посту
             postElement.innerHTML = `
                 <h3>${post.subject}</h3>
                 <p>${post.content}</p>
@@ -106,6 +113,8 @@ export const setupWebSocketHandlers = () => {
                     <span>Dislikes: ${post.dislike_count}</span>
                 </div>
             `;
+            postElement.onclick = () => navigateToPostDetails(post.id); // Прив'язуємо подію кліку
+
             postsContainer.prepend(postElement);
         }
     });

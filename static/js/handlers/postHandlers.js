@@ -57,6 +57,7 @@ export const loadAndRenderPosts = async () => {
             const categories = post.categories.map(category => `<span class="category">${category.name}</span>`).join(', ');
             const postElement = document.createElement("div");
             postElement.classList.add("post");
+            postElement.id = `post-${post.id}`; // Додаємо ID до посту
             postElement.innerHTML = `
                 <h3>${post.subject}</h3>
                 <p>${post.content}</p>
@@ -73,6 +74,7 @@ export const loadAndRenderPosts = async () => {
         console.error("Failed to load posts:", error);
     }
 };
+
 
 export const loadAndRenderSinglePost = async (postId) => {
     try {
