@@ -3,7 +3,6 @@ import { handleCreatePostFormSubmit, loadAndRenderPosts, loadAndRenderSinglePost
 import { loadAndRenderComments } from './handlers/commentHandlers.js';
 import { handleCreateCategoryFormSubmit, loadCategories } from './handlers/categoryHandlers.js';
 import { navigateToPostDetails } from './routeUtils.js';
-import { initializeWebSocket } from './websocket.js';
 
 export { 
     handleLoginFormSubmit, 
@@ -12,7 +11,6 @@ export {
     loadAndRenderPosts, 
     handleCreateCategoryFormSubmit, 
     loadCategories, 
-    initializeWebSocket, 
     loadAndRenderSinglePost,
     loadAndRenderComments,
     navigateToPostDetails

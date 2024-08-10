@@ -29,6 +29,9 @@ const connectWebSocket = () => {
             const message = messageQueue.shift();
             sendMessage(message);
         }
+
+        // Send login message
+        sendMessage({ type: 'login' });
     };
 
     socket.onmessage = (event) => {
@@ -41,6 +44,9 @@ const connectWebSocket = () => {
                 break;
             case "comment":
                 handleComment(message.data);
+                break;
+            case "user_status":
+                handleUserStatus(message.data);
                 break;
             default:
                 console.warn("Unknown message type:", message.type);
@@ -58,6 +64,9 @@ const connectWebSocket = () => {
         } else {
             console.error("Max reconnect attempts reached. Could not reconnect to WebSocket server.");
         }
+
+        // Send logout message
+        sendMessage({ type: 'logout' });
     };
 
     socket.onerror = (error) => {
@@ -118,6 +127,21 @@ const handleComment = (comment) => {
             </div>
         `;
         commentsContainer.appendChild(commentElement);
+    }
+};
+
+const handleUserStatus = (users) => {
+    const userContainer = document.getElementById("box1");
+    if (userContainer) {
+        userContainer.innerHTML = ''; // Clear current content
+
+        users.forEach(user => {
+            const userElement = document.createElement("div");
+            userElement.classList.add("user-box");
+            const statusClass = user.is_online ? "logged-in" : "logged-out";
+            userElement.innerHTML = `<span class="${statusClass}">●</span>${user.username}`;
+            userContainer.appendChild(userElement);
+        });
     }
 };
 

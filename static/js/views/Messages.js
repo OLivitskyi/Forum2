@@ -1,18 +1,19 @@
 import AbstractView from "./AbstractView.js";
 import { getLayoutHtml } from "./layout.js";
+import { initializeWebSocket } from "../websocket.js";
+
 export default class extends AbstractView {
   constructor(params) {
     super(params);
     this.setTitle("Messages");
   }
+
   async getHtml() {
     const content = `
             <h1>Welcome to your Messages, User!</h1>
           <div class="message-container">
                 <div class="box" id="box1">
-                          <div class="user-box"><span class="logged-in">●</span>User 1 </div>
-                          <div class="user-box"><span class="logged-in">●</span>User 2 </div>
-                          <div class="user-box"><span class="logged-out">●</span>User 3 </div>
+                          <!-- Users will be dynamically inserted here -->
                 </div>
                 <div class="box" id="box2">
                           <div class="message-list">
@@ -31,5 +32,13 @@ export default class extends AbstractView {
           </div>
         `;
     return getLayoutHtml(content);
+  }
+
+  async onMounted() {
+    const sessionToken = localStorage.getItem('session_token');
+    if (sessionToken) {
+    } else {
+      console.error("No session token found in localStorage");
+    }
   }
 }

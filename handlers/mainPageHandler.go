@@ -1,9 +1,11 @@
 package handlers
 
 import (
+	"forum/db"
 	"html/template"
 	"log"
 	"net/http"
+	"time"
 )
 
 func MainPageHandler(w http.ResponseWriter, r *http.Request) {
@@ -65,13 +67,69 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	user := ValidateSession(w, r)
 	if user != "" {
+		userID, err := db.GetUserIDByUsernameOrEmail(user)
+		if err != nil {
+			log.Printf("Failed to get user ID for logout: %v", err)
+			http.Error(w, "Failed to logout", http.StatusInternalServerError)
+			return
+		}
 		CloseSession(w, r)
+		db.UpdateUserStatus(userID, false) // Update user status to offline
+		broadcastUserStatus()              // Broadcast user status update
 	}
 	if r.Header.Get("Accept") == "application/json" {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(`{"message": "Logout successful"}`))
+
 	} else {
 		http.Redirect(w, r, "/", http.StatusFound)
 	}
+}
+
+func LoginHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	usernameOrEmail := r.FormValue("username")
+	password := r.FormValue("password")
+	login, err := db.LoginUser(usernameOrEmail, password)
+	if err != nil {
+		w.WriteHeader(http.StatusForbidden)
+		w.Write([]byte(err.Error()))
+		log.Printf("Login failed: %v", err)
+		return
+	}
+	userID, err := db.GetUserIDByUsernameOrEmail(usernameOrEmail)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("Failed to get user ID"))
+		log.Printf("Failed to get user ID: %v", err)
+		return
+	}
+	token, err := NewSession(w, login.Username, userID)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("Failed to create session"))
+		log.Printf("Failed to create session: %v", err)
+		return
+	}
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "session_token",
+		Value:    token,
+		Expires:  time.Now().Add(24 * time.Hour),
+		Path:     "/",
+		HttpOnly: true,
+	})
+
+	db.UpdateUserStatus(userID, true) // Update user status to online
+	broadcastUserStatus()             // Broadcast user status update
+
+	log.Printf("User %s logged in with session token %s", login.Username, token)
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(token))
 }

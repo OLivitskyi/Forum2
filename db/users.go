@@ -148,3 +148,29 @@ func GetUsersOrderedByLastMessageOrAlphabetically() ([]User, error) {
 	}
 	return users, nil
 }
+
+// GetAllUsersWithStatus retrieves all users with their online status.
+func GetAllUsersWithStatus() ([]UserStatus, error) {
+	if DB == nil {
+		return nil, fmt.Errorf("db connection failed")
+	}
+	rows, err := DB.Query(`
+		SELECT users.user_id, users.username, user_status.is_online, user_status.last_activity
+		FROM users
+		LEFT JOIN user_status ON users.user_id = user_status.user_id
+	`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var statuses []UserStatus
+	for rows.Next() {
+		var status UserStatus
+		err := rows.Scan(&status.UserID, &status.Username, &status.IsOnline, &status.LastActivity)
+		if err != nil {
+			return nil, err
+		}
+		statuses = append(statuses, status)
+	}
+	return statuses, nil
+}

@@ -119,6 +119,7 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 		db.UpdateUserStatus(userID, false)
 		ws.Close()
 		log.Printf("User %s disconnected", userID)
+		broadcastUserStatus() // Broadcast user status when someone disconnects
 	}()
 
 	sessionToken := r.URL.Query().Get("session_token")
@@ -136,6 +137,7 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 	clients[ws] = userID
 	mutex.Unlock()
 	db.UpdateUserStatus(userID, true)
+	broadcastUserStatus() // Broadcast user status when someone connects
 
 	for {
 		_, msg, err := ws.ReadMessage()
@@ -212,4 +214,53 @@ func handleMessages() {
 
 func InitWebSocketHandler() {
 	go handleMessages()
+}
+
+type UserStatusMessage struct {
+	MessageID uuid.UUID       `json:"message_id"`
+	Type      string          `json:"type"`
+	Users     []db.UserStatus `json:"users"`
+	Timestamp time.Time       `json:"timestamp"`
+}
+
+func (usm UserStatusMessage) Process() {
+	log.Printf("Broadcasting user status update")
+	mutex.Lock()
+	if _, exists := processedMessages[usm.MessageID]; exists {
+		mutex.Unlock()
+		return
+	}
+	processedMessages[usm.MessageID] = struct{}{}
+	mutex.Unlock()
+
+	for client := range clients {
+		log.Printf("Sending user status to client: %v", clients[client])
+		message := map[string]interface{}{
+			"type": "user_status",
+			"data": usm.Users,
+		}
+		err := client.WriteJSON(message)
+		if err != nil {
+			log.Printf("Error writing to websocket: %v", err)
+			client.Close()
+			mutex.Lock()
+			delete(clients, client)
+			mutex.Unlock()
+		}
+	}
+}
+
+func broadcastUserStatus() {
+	users, err := db.GetAllUsersWithStatus()
+	if err != nil {
+		log.Printf("Error fetching user status: %v", err)
+		return
+	}
+	userStatusMessage := UserStatusMessage{
+		MessageID: uuid.Must(uuid.NewV4()),
+		Type:      "user_status",
+		Users:     users,
+		Timestamp: time.Now(),
+	}
+	broadcast <- userStatusMessage
 }

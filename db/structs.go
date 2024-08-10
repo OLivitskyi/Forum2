@@ -34,6 +34,7 @@ type Message struct {
 
 type UserStatus struct {
 	UserID       uuid.UUID `json:"user_id"`
+	Username     string    `json:"username"`
 	IsOnline     bool      `json:"is_online"`
 	LastActivity time.Time `json:"last_activity"`
 }

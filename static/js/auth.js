@@ -1,6 +1,6 @@
 import { sendRequest } from './api.js';
 import { navigateTo } from './routeUtils.js';
-import { initializeWebSocket } from './websocket.js';
+import { initializeWebSocket} from './websocket.js';
 
 export const isAuthenticated = async () => {
     try {
