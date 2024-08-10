@@ -82,3 +82,15 @@ func ClearSessions() error {
 	log.Println("All sessions have been cleared from the database")
 	return nil
 }
+
+func ClearUserStatus() error {
+	if DB == nil {
+		return fmt.Errorf("db connection failed")
+	}
+	_, err := DB.Exec("DELETE FROM user_status")
+	if err != nil {
+		return fmt.Errorf("failed to clear user_status: %v", err)
+	}
+	log.Println("All user_status have been cleared from the database")
+	return nil
+}

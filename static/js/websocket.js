@@ -145,6 +145,11 @@ const handleUserStatus = (users) => {
     }
 };
 
+// Додаємо функцію для запиту статусів користувачів
+export const requestUserStatus = () => {
+    sendMessage({ type: 'request_user_status' });
+};
+
 export const sendPost = (post) => {
     sendMessage({ type: 'post', data: post });
 };

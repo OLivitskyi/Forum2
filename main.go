@@ -9,68 +9,75 @@ import (
 )
 
 func main() {
-	// Підключення до бази даних
-	err := db.ConnectDatabase()
-	if err != nil {
+	// Connect to the database
+	if err := db.ConnectDatabase(); err != nil {
 		log.Fatalf("Failed to connect to database in main.go: %v", err)
 	}
 
-	// Очищення сесій
-	err = db.ClearSessions()
-	if err != nil {
+	// Clear sessions and user statuses
+	if err := db.ClearSessions(); err != nil {
 		log.Fatalf("Failed to clear sessions: %v", err)
 	}
 
-	// Ініціалізація WebSocket
+	if err := db.ClearUserStatus(); err != nil {
+		log.Fatalf("Failed to clear user_status: %v", err)
+	}
+
+	// Initialize WebSocket handler
 	handlers.InitWebSocketHandler()
 
-	// Сервер статичних файлів
+	// Serve static files
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
-	// Маршрути для сторінок
+	// Page routes
 	http.HandleFunc("/", handlers.MainPageHandler)
 	http.HandleFunc("/registration", handlers.SignupHandler)
 	http.HandleFunc("/homepage", handlers.HomepageHandler)
 	http.HandleFunc("/logout", handlers.LogoutHandler)
 
-	// API маршрути
-	http.HandleFunc("/api/login", handlers.LoginHandler)
-	http.HandleFunc("/api/validate-session", handlers.ValidateSessionHandler)
-	http.Handle("/api/create-category", handlers.RequireLogin(http.HandlerFunc(handlers.CreateCategoryHandler)))
-	http.Handle("/api/get-categories", handlers.RequireLogin(http.HandlerFunc(handlers.GetCategoriesHandler)))
-	http.Handle("/api/get-category", handlers.RequireLogin(http.HandlerFunc(handlers.GetCategoryByIDHandler)))
-	http.Handle("/api/create-post", handlers.RequireLogin(http.HandlerFunc(handlers.CreatePostHandler)))
-
-	// Маршрути для роботи з постами
-	http.Handle("/api/posts", handlers.RequireLogin(http.HandlerFunc(handlers.GetPostsHandler)))
-	http.Handle("/api/post/", handlers.RequireLogin(http.HandlerFunc(handlers.GetPostHandler)))
-
-	// Маршрут для створення коментаря
-	http.Handle("/api/post/comments/new", handlers.RequireLogin(http.HandlerFunc(handlers.CreateCommentHandler)))
-
-	// Маршрут для отримання окремого посту
-	http.Handle("/api/get-post/", handlers.RequireLogin(http.HandlerFunc(handlers.GetPostHandler)))
-
-	// Маршрут для отримання коментарів до посту
-	http.Handle("/api/post-comments/", handlers.RequireLogin(http.HandlerFunc(handlers.GetCommentsHandler)))
-
-	// Інші API маршрути
-	http.Handle("/api/send-message", handlers.RequireLogin(http.HandlerFunc(handlers.SendMessageHandler)))
-	http.Handle("/api/get-messages", handlers.RequireLogin(http.HandlerFunc(handlers.GetMessagesHandler)))
-	http.Handle("/api/update-status", handlers.RequireLogin(http.HandlerFunc(handlers.UpdateStatusHandler)))
-	http.Handle("/api/get-user-status", handlers.RequireLogin(http.HandlerFunc(handlers.GetUserStatusHandler)))
-	http.Handle("/api/mark-message-read", handlers.RequireLogin(http.HandlerFunc(handlers.MarkMessageAsReadHandler)))
-	http.Handle("/api/get-users", handlers.RequireLogin(http.HandlerFunc(handlers.GetUsersHandler)))
-	http.Handle("/api/add-comment-reaction", handlers.RequireLogin(http.HandlerFunc(handlers.AddCommentReactionHandler)))
+	// API routes
+	apiRoutes()
 
 	// WebSocket handler
 	http.HandleFunc("/ws", handlers.WebSocketHandler)
 
-	// Запуск сервера
+	// Start the server
 	fmt.Printf("Starting server at port 8080\n")
 	fmt.Printf("Go to http://localhost:8080/\n")
 	fmt.Printf("Ctrl + C to close the server\n")
 	if err := http.ListenAndServe(":8080", nil); err != nil {
 		log.Fatal(err)
 	}
+}
+
+func apiRoutes() {
+	// Authentication routes
+	http.HandleFunc("/api/login", handlers.LoginHandler)
+	http.HandleFunc("/api/validate-session", handlers.ValidateSessionHandler)
+
+	// Category routes
+	http.Handle("/api/create-category", handlers.RequireLogin(http.HandlerFunc(handlers.CreateCategoryHandler)))
+	http.Handle("/api/get-categories", handlers.RequireLogin(http.HandlerFunc(handlers.GetCategoriesHandler)))
+	http.Handle("/api/get-category", handlers.RequireLogin(http.HandlerFunc(handlers.GetCategoryByIDHandler)))
+
+	// Post routes
+	http.Handle("/api/create-post", handlers.RequireLogin(http.HandlerFunc(handlers.CreatePostHandler)))
+	http.Handle("/api/posts", handlers.RequireLogin(http.HandlerFunc(handlers.GetPostsHandler)))
+	http.Handle("/api/post/", handlers.RequireLogin(http.HandlerFunc(handlers.GetPostHandler)))
+	http.Handle("/api/get-post/", handlers.RequireLogin(http.HandlerFunc(handlers.GetPostHandler)))
+
+	// Comment routes
+	http.Handle("/api/post/comments/new", handlers.RequireLogin(http.HandlerFunc(handlers.CreateCommentHandler)))
+	http.Handle("/api/post-comments/", handlers.RequireLogin(http.HandlerFunc(handlers.GetCommentsHandler)))
+	http.Handle("/api/add-comment-reaction", handlers.RequireLogin(http.HandlerFunc(handlers.AddCommentReactionHandler)))
+
+	// Message routes
+	http.Handle("/api/send-message", handlers.RequireLogin(http.HandlerFunc(handlers.SendMessageHandler)))
+	http.Handle("/api/get-messages", handlers.RequireLogin(http.HandlerFunc(handlers.GetMessagesHandler)))
+	http.Handle("/api/mark-message-read", handlers.RequireLogin(http.HandlerFunc(handlers.MarkMessageAsReadHandler)))
+
+	// User status routes
+	http.Handle("/api/update-status", handlers.RequireLogin(http.HandlerFunc(handlers.UpdateStatusHandler)))
+	http.Handle("/api/get-user-status", handlers.RequireLogin(http.HandlerFunc(handlers.GetUserStatusHandler)))
+	http.Handle("/api/get-users", handlers.RequireLogin(http.HandlerFunc(handlers.GetUsersHandler)))
 }

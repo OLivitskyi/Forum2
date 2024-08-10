@@ -36,34 +36,15 @@ type PostMessage struct {
 
 func (pm PostMessage) Process() {
 	log.Printf("Broadcasting new post: %+v", pm.Post)
-	mutex.Lock()
-	if _, exists := processedMessages[pm.MessageID]; exists {
-		mutex.Unlock()
+	if isProcessed(pm.MessageID) {
 		return
 	}
-	processedMessages[pm.MessageID] = struct{}{}
-	mutex.Unlock()
-
 	completePost, err := db.GetPostByID(pm.Post.ID)
 	if err != nil {
 		log.Printf("Error fetching complete post data: %v", err)
 		return
 	}
-	for client := range clients {
-		log.Printf("Sending post to client: %v", clients[client])
-		message := map[string]interface{}{
-			"type": "post",
-			"data": completePost,
-		}
-		err := client.WriteJSON(message)
-		if err != nil {
-			log.Printf("Error writing to websocket: %v", err)
-			client.Close()
-			mutex.Lock()
-			delete(clients, client)
-			mutex.Unlock()
-		}
-	}
+	broadcastMessageToAll("post", completePost)
 }
 
 type CommentMessage struct {
@@ -75,34 +56,15 @@ type CommentMessage struct {
 
 func (cm CommentMessage) Process() {
 	log.Printf("Broadcasting new comment: %+v", cm.Comment)
-	mutex.Lock()
-	if _, exists := processedMessages[cm.MessageID]; exists {
-		mutex.Unlock()
+	if isProcessed(cm.MessageID) {
 		return
 	}
-	processedMessages[cm.MessageID] = struct{}{}
-	mutex.Unlock()
-
 	completeComment, err := db.GetCommentByID(cm.Comment.ID)
 	if err != nil {
 		log.Printf("Error fetching complete comment data: %v", err)
 		return
 	}
-	for client := range clients {
-		log.Printf("Sending comment to client: %v", clients[client])
-		message := map[string]interface{}{
-			"type": "comment",
-			"data": completeComment,
-		}
-		err := client.WriteJSON(message)
-		if err != nil {
-			log.Printf("Error writing to websocket: %v", err)
-			client.Close()
-			mutex.Lock()
-			delete(clients, client)
-			mutex.Unlock()
-		}
-	}
+	broadcastMessageToAll("comment", completeComment)
 }
 
 func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
@@ -192,6 +154,9 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 					Timestamp: time.Now(),
 				}
 				broadcast <- commentMessage
+			case "request_user_status":
+				log.Printf("Received request for user status from user %s", userID)
+				broadcastUserStatusToClient(ws)
 			default:
 				log.Printf("Unknown message type: %v", messageType)
 			}
@@ -225,20 +190,47 @@ type UserStatusMessage struct {
 
 func (usm UserStatusMessage) Process() {
 	log.Printf("Broadcasting user status update")
-	mutex.Lock()
-	if _, exists := processedMessages[usm.MessageID]; exists {
-		mutex.Unlock()
+	if isProcessed(usm.MessageID) {
 		return
 	}
-	processedMessages[usm.MessageID] = struct{}{}
-	mutex.Unlock()
+	broadcastMessageToAll("user_status", usm.Users)
+}
 
+func broadcastUserStatus() {
+	users, err := db.GetAllUsersWithStatus()
+	if err != nil {
+		log.Printf("Error fetching user status: %v", err)
+		return
+	}
+	broadcastMessageToAll("user_status", users)
+}
+
+func broadcastUserStatusToClient(client *websocket.Conn) {
+	users, err := db.GetAllUsersWithStatus()
+	if err != nil {
+		log.Printf("Error fetching user status: %v", err)
+		return
+	}
+	broadcastMessageToClient(client, "user_status", users)
+}
+
+// New helper functions
+func isProcessed(messageID uuid.UUID) bool {
+	mutex.Lock()
+	defer mutex.Unlock()
+	if _, exists := processedMessages[messageID]; exists {
+		return true
+	}
+	processedMessages[messageID] = struct{}{}
+	return false
+}
+
+func broadcastMessageToAll(messageType string, data interface{}) {
+	message := map[string]interface{}{
+		"type": messageType,
+		"data": data,
+	}
 	for client := range clients {
-		log.Printf("Sending user status to client: %v", clients[client])
-		message := map[string]interface{}{
-			"type": "user_status",
-			"data": usm.Users,
-		}
 		err := client.WriteJSON(message)
 		if err != nil {
 			log.Printf("Error writing to websocket: %v", err)
@@ -250,17 +242,17 @@ func (usm UserStatusMessage) Process() {
 	}
 }
 
-func broadcastUserStatus() {
-	users, err := db.GetAllUsersWithStatus()
+func broadcastMessageToClient(client *websocket.Conn, messageType string, data interface{}) {
+	message := map[string]interface{}{
+		"type": messageType,
+		"data": data,
+	}
+	err := client.WriteJSON(message)
 	if err != nil {
-		log.Printf("Error fetching user status: %v", err)
-		return
+		log.Printf("Error writing to websocket: %v", err)
+		client.Close()
+		mutex.Lock()
+		delete(clients, client)
+		mutex.Unlock()
 	}
-	userStatusMessage := UserStatusMessage{
-		MessageID: uuid.Must(uuid.NewV4()),
-		Type:      "user_status",
-		Users:     users,
-		Timestamp: time.Now(),
-	}
-	broadcast <- userStatusMessage
 }
