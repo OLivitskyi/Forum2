@@ -1,6 +1,6 @@
 import { sendRequest } from './api.js';
 import { navigateTo } from './routeUtils.js';
-import { connectWebSocket, setupWebSocketHandlers } from './websocket.js';
+import { initializeWebSocket } from './websocket.js';
 
 export const isAuthenticated = async () => {
     try {
@@ -9,11 +9,7 @@ export const isAuthenticated = async () => {
             credentials: "same-origin",
         });
 
-        if (response.ok) {
-            return true;
-        } else {
-            return false;
-        }
+        return response.ok;
     } catch (error) {
         console.error("Failed to validate session:", error);
         return false;
@@ -33,6 +29,5 @@ export const logout = async () => {
 export const connectAfterLogin = (token) => {
     localStorage.setItem('session_token', token);
     console.log("New token set in localStorage: ", localStorage.getItem('session_token'));
-    connectWebSocket(token);
-    setupWebSocketHandlers();
+    initializeWebSocket(token);
 };

@@ -1,10 +1,14 @@
-let socket;
-let messageHandler = () => {};
-let reactionHandler = () => {};
-let postHandler = () => {};
-let commentHandler = () => {};
+// static/js/websocket.js
+import { navigateToPostDetails } from './routeUtils.js';
 
-export const connectWebSocket = (sessionToken) => {
+let socket;
+let isConnected = false;
+let reconnectAttempts = 0;
+const maxReconnectAttempts = 5;
+const messageQueue = [];
+let sessionToken = null;
+
+const connectWebSocket = () => {
     if (!sessionToken) {
         console.error("No session token provided for WebSocket connection");
         return;
@@ -19,6 +23,14 @@ export const connectWebSocket = (sessionToken) => {
 
     socket.onopen = () => {
         console.log("Connected to WebSocket server");
+        isConnected = true;
+        reconnectAttempts = 0;
+
+        // Відправити повідомлення з черги
+        while (messageQueue.length > 0) {
+            const message = messageQueue.shift();
+            sendMessage(message);
+        }
     };
 
     socket.onmessage = (event) => {
@@ -26,25 +38,28 @@ export const connectWebSocket = (sessionToken) => {
         console.log("Received message:", message);
 
         switch (message.type) {
-            case "message":
-                messageHandler(message);
-                break;
-            case "reaction":
-                reactionHandler(message);
-                break;
             case "post":
-                postHandler(message.data); // Передаємо тільки дані посту
+                handlePost(message.data);
                 break;
             case "comment":
-                commentHandler(message.data); // Передаємо тільки дані коментаря
+                handleComment(message.data);
                 break;
             default:
-                console.warn("Unknown message type:", message);
+                console.warn("Unknown message type:", message.type);
         }
     };
 
-    socket.onclose = () => {
-        console.log("Disconnected from WebSocket server");
+    socket.onclose = (event) => {
+        isConnected = false;
+        console.log("Disconnected from WebSocket server, code:", event.code, "reason:", event.reason);
+
+        if (reconnectAttempts < maxReconnectAttempts) {
+            reconnectAttempts++;
+            console.log(`Attempting to reconnect... (${reconnectAttempts}/${maxReconnectAttempts})`);
+            setTimeout(connectWebSocket, 5000); // Відкладене перепідключення через 5 секунд
+        } else {
+            console.error("Max reconnect attempts reached. Could not reconnect to WebSocket server.");
+        }
     };
 
     socket.onerror = (error) => {
@@ -52,88 +67,73 @@ export const connectWebSocket = (sessionToken) => {
     };
 };
 
-export const sendPost = (post) => {
-    if (socket && socket.readyState === WebSocket.OPEN) {
-        const message = { type: 'post', data: post };
-        console.log("Sending post:", message);
+const sendMessage = (message) => {
+    if (isConnected && socket && socket.readyState === WebSocket.OPEN) {
         socket.send(JSON.stringify(message));
     } else {
-        console.error("WebSocket is not connected");
+        console.warn("WebSocket is not connected. Queuing message...");
+        messageQueue.push(message);
     }
+};
+
+// Обробка отриманих постів через WebSocket
+const handlePost = (post) => {
+    const postsContainer = document.getElementById("posts-container");
+    if (postsContainer) {
+        if (document.getElementById(`post-${post.id}`)) {
+            console.warn(`Post with ID ${post.id} already exists, skipping`);
+            return;
+        }
+
+        const categories = post.categories.map(category => `<span class="category">${category.name}</span>`).join(', ');
+        const postElement = document.createElement("div");
+        postElement.classList.add("post");
+        postElement.id = `post-${post.id}`;
+        postElement.innerHTML = `
+            <h3>${post.subject}</h3>
+            <p>${post.content}</p>
+            <div class="post-categories">Categories: ${categories}</div>
+            <div>
+                <span>Likes: ${post.like_count}</span>
+                <span>Dislikes: ${post.dislike_count}</span>
+            </div>
+        `;
+
+        postElement.addEventListener('click', () => {
+            navigateToPostDetails(post.id);
+        });
+
+        postsContainer.prepend(postElement);
+    }
+};
+
+// Обробка отриманих коментарів через WebSocket
+const handleComment = (comment) => {
+    const commentsContainer = document.getElementById("comments-container");
+    if (commentsContainer) {
+        const commentElement = document.createElement("div");
+        commentElement.classList.add("comment");
+        commentElement.innerHTML = `
+            <h4>${comment.user.username}</h4>
+            <p>${comment.content}</p>
+            <div>
+                <span>Likes: ${comment.like_count}</span>
+                <span>Dislikes: ${comment.dislike_count}</span>
+            </div>
+        `;
+        commentsContainer.appendChild(commentElement);
+    }
+};
+
+export const sendPost = (post) => {
+    sendMessage({ type: 'post', data: post });
 };
 
 export const sendComment = (comment) => {
-    if (socket && socket.readyState === WebSocket.OPEN) {
-        const message = { type: 'comment', data: comment };
-        console.log("Sending comment:", message);
-        socket.send(JSON.stringify(message));
-    } else {
-        console.error("WebSocket is not connected");
-    }
+    sendMessage({ type: 'comment', data: comment });
 };
 
-
-export const setMessageHandler = (handler) => {
-    messageHandler = handler;
-};
-
-export const setReactionHandler = (handler) => {
-    reactionHandler = handler;
-};
-
-export const setPostHandler = (handler) => {
-    postHandler = handler;
-};
-
-export const setCommentHandler = (handler) => {
-    commentHandler = handler;
-};
-
-export const setupWebSocketHandlers = () => {
-    setPostHandler((post) => {
-        console.log("Handling new post:", post);
-        const postsContainer = document.getElementById("posts-container");
-        if (postsContainer) {
-            // Перевіряємо, чи існує вже елемент з таким ID
-            if (document.getElementById(`post-${post.id}`)) {
-                console.warn(`Post with ID ${post.id} already exists, skipping`);
-                return;
-            }
-
-            const categories = post.categories.map(category => `<span class="category">${category.name}</span>`).join(', ');
-            const postElement = document.createElement("div");
-            postElement.classList.add("post");
-            postElement.id = `post-${post.id}`; // Додаємо ID до посту
-            postElement.innerHTML = `
-                <h3>${post.subject}</h3>
-                <p>${post.content}</p>
-                <div class="post-categories">Categories: ${categories}</div>
-                <div>
-                    <span>Likes: ${post.like_count}</span>
-                    <span>Dislikes: ${post.dislike_count}</span>
-                </div>
-            `;
-            postElement.onclick = () => navigateToPostDetails(post.id); // Прив'язуємо подію кліку
-
-            postsContainer.prepend(postElement);
-        }
-    });
-
-    setCommentHandler((comment) => {
-        console.log("Handling new comment:", comment);
-        const commentsContainer = document.getElementById("comments-container");
-        if (commentsContainer) {
-            const commentElement = document.createElement("div");
-            commentElement.classList.add("comment");
-            commentElement.innerHTML = `
-                <h4>${comment.user.username}</h4>
-                <p>${comment.content}</p>
-                <div>
-                    <span>Likes: ${comment.like_count}</span>
-                    <span>Dislikes: ${comment.dislike_count}</span>
-                </div>
-            `;
-            commentsContainer.appendChild(commentElement);
-        }
-    });
+export const initializeWebSocket = (token) => {
+    sessionToken = token;
+    connectWebSocket();
 };

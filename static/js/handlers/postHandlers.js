@@ -47,35 +47,6 @@ async function handleCreatePostSubmit(e) {
     }
 };
 
-export const loadAndRenderPosts = async () => {
-    try {
-        const postsContainer = document.getElementById("posts-container");
-        if (!postsContainer) return;
-        const posts = await getPosts();
-        postsContainer.innerHTML = "";
-        posts.forEach(post => {
-            const categories = post.categories.map(category => `<span class="category">${category.name}</span>`).join(', ');
-            const postElement = document.createElement("div");
-            postElement.classList.add("post");
-            postElement.id = `post-${post.id}`; // Додаємо ID до посту
-            postElement.innerHTML = `
-                <h3>${post.subject}</h3>
-                <p>${post.content}</p>
-                <div class="post-categories">Categories: ${categories}</div>
-                <div>
-                    <span>Likes: ${post.like_count}</span>
-                    <span>Dislikes: ${post.dislike_count}</span>
-                </div>
-            `;
-            postElement.onclick = () => navigateToPostDetails(post.id);
-            postsContainer.appendChild(postElement);
-        });
-    } catch (error) {
-        console.error("Failed to load posts:", error);
-    }
-};
-
-
 export const loadAndRenderSinglePost = async (postId) => {
     try {
         console.log("Loading post details for post ID:", postId);
@@ -101,8 +72,40 @@ export const loadAndRenderSinglePost = async (postId) => {
                 </div>
             </div>
         `;
-        await loadAndRenderComments(postId); // Завантаження та відображення коментарів
+        await loadAndRenderComments(postId);
     } catch (error) {
         console.error("Failed to load post:", error);
+    }
+};
+export const loadAndRenderPosts = async () => {
+    try {
+        const postsContainer = document.getElementById("posts-container");
+        if (!postsContainer) return;
+        const posts = await getPosts();
+        postsContainer.innerHTML = "";
+        posts.forEach(post => {
+            const categories = post.categories.map(category => `<span class="category">${category.name}</span>`).join(', ');
+            const postElement = document.createElement("div");
+            postElement.classList.add("post");
+            postElement.id = `post-${post.id}`; // Додаємо ID до посту
+            postElement.innerHTML = `
+                <h3>${post.subject}</h3>
+                <p>${post.content}</p>
+                <div class="post-categories">Categories: ${categories}</div>
+                <div>
+                    <span>Likes: ${post.like_count}</span>
+                    <span>Dislikes: ${post.dislike_count}</span>
+                </div>
+            `;
+
+            // Прив'язуємо подію кліку для відкриття посту
+            postElement.addEventListener('click', () => {
+                navigateToPostDetails(post.id);
+            });
+
+            postsContainer.appendChild(postElement);
+        });
+    } catch (error) {
+        console.error("Failed to load posts:", error);
     }
 };

@@ -43,11 +43,11 @@ body{
     overflow-x: hidden;
 }
 .container{
-    display: grid;
-    width: 96%;
+    display: flex;
+    width: calc(100% - 14rem);
     margin: 0 auto;
     gap: 1.8rem;
-    grid-template-columns: 14rem auto 23rem;
+    /* grid-template-columns: 14rem auto 23rem; */
 }
 a{
     color:var(--color-dark)
@@ -105,6 +105,15 @@ b{
 }
 aside{
     height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 14rem;
+    z-index: 1000px;
+    background-color: #120075;
+    display: flex;
+    flex-direction: column;
+    border-radius: 0 10px 10px 0;
 }
 aside .top{
     background: white;
@@ -190,9 +199,9 @@ aside .sidebar .message-count {
 /* ================ END OF SIDEBAR ================ */
 /* ================ CREATE POST CONTAINER ================ */
 .create-post-container {
-    background-color: #ffbb55;
+    background-color: #FFBB55;
     border: 1px solid #120075;
-    width: 800px;
+    width: 1000px;
     margin-top: 100px;
     padding-bottom: 160px;
     padding-top: 100px;
@@ -201,7 +210,7 @@ aside .sidebar .message-count {
     max-width: 90%;
 }
 .container-post {
-    background-color: #7380ec;
+    background-color: #7380EC;
     width: 600px;
     flex-direction: column;
 }
@@ -213,7 +222,7 @@ aside .sidebar .message-count {
     text-align: center;
 }
 ::placeholder {
-    color: #0d043e;
+    color: #0D043E;
 }
 .post-subject {
     font-size: 22px;
@@ -233,7 +242,7 @@ aside .sidebar .message-count {
     border-radius: 1em;
     border: none;
     outline: none;
-    background: #dddddd;
+    background: #DDDDDD;
     cursor: pointer;
 }
 .pill-submit {
@@ -243,32 +252,99 @@ aside .sidebar .message-count {
     background-color: var(--color-danger);
 }
 .pill:not(.pill--selected):hover {
-    background: #cccccc;
+    background: #CCCCCC;
 }
 .pill--selected {
     background: #120075;
-    color: #ffffff;
+    color: #FFFFFF;
 }
 /* ================ MESSAGES ================ */
-.messages-container {
-    background-color: #ffbb55;
-    border: 1px solid #120075;
+.message-container {
     width: 800px;
-    margin-top: 100px;
-    padding-bottom: 500px;
-    padding-top: 100px;
-    border-radius: 10px;
-    max-width: 90%;
+    height: 600px;
+    background-color: var(--color-background);
     display: flex;
-    position: relative;
+    flex-direction: row;
+    margin-top: 100px;
+    border-radius: 10px;
 }
-.leftSide {
-    flex: 30%;
-    background: #7f1f1f;
-    border-right: 2px solid rgba(0, 0, 0, 0.2);
+.box {
+    height: 600px;
+    font-size: 2.6em;
+    border-radius: 10px;
+}
+/* ================ LEFT SIDE OF MESSAGE BOX (user list) ================ */
+#box1 {
+    width: 300px;
+    background-color: white;
+    border: 3px solid #04044F;
+    text-align: center;
+    flex-direction: column;
+}
+.user-box {
+    background-color: rgba(128, 0, 128, 0.329);
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-bottom: 1px solid #323D2F;
+}
+.logged-in {
+    color: rgb(136, 240, 136);
+    margin-right: 20px;
   }
-.rightSide {
-    flex: 70%;
-    background: #09ef46;
-    border-right: 2px solid rgba(0, 0, 0, 0.2);
+  .logged-out {
+    color: red;
+    margin-right: 20px;
   }
+/* ================ RIGHT SIDE OF MESSAGE BOX (send and view messages) ================ */
+#box2 {
+    width: 500px;
+    background-color: #FFBB55;
+    border: 1px solid #62616C;
+}
+.message-list {
+    flex: 1; /* message list take up all available space */
+    overflow-y: scroll; /* scrollbar if messages exceed height */
+    padding: 10px;
+}
+.chatbox {
+    display: flex;
+    height: 40px;
+}
+#message-input {
+    flex: 1;
+    border: 1px solid rgb(126, 255, 114);
+}
+#send-button {
+    padding: 5px 30px;
+    border-radius: 5px;
+    background-color: var(--color-danger);
+    border: none;
+    cursor: pointer;
+    font-weight: 800;
+}
+#send-button:hover {
+    background-color: #FA71B8;
+}
+.message {
+  display: flex;
+  margin-bottom: 10px;
+}
+.user-message {
+  justify-content: flex-end;
+}
+.other-user-message {
+  justify-content: flex-start;
+}
+.message-content {
+  max-width: 80%;
+  padding: 10px;
+  border-radius: 10px;
+}
+.user-message .message-content {
+  background-color: #6DD9DF;
+}
+.other-user-message .message-content {
+  background-color: #F2F2F2;
+}

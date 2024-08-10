@@ -1,7 +1,7 @@
 import { routes } from './routes.js';
 import { pathToRegex, getParams, navigateTo } from './routeUtils.js';
 import { isAuthenticated } from './auth.js';
-import { handleLoginFormSubmit, handleLogout, handleCreatePostFormSubmit, handleCreateCategoryFormSubmit, setupWebSocketHandlers } from './eventHandlers.js';
+import { handleLoginFormSubmit, handleLogout, handleCreatePostFormSubmit, handleCreateCategoryFormSubmit } from './eventHandlers.js';
 import { showError, clearError } from './errorHandler.js';
 import { setInputError, clearInputError, setupFormSwitching, setupFormValidation } from './formHandler.js';
 
@@ -46,7 +46,6 @@ export const router = async () => {
     setupFormValidation();
     handleCreatePostFormSubmit(clearError, showError);
     handleCreateCategoryFormSubmit(clearError, showError);
-    setupWebSocketHandlers();
     setupElementHandlers();
 };
 

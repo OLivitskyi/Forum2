@@ -6,16 +6,18 @@ import { showError, clearError } from '../errorHandler.js';
 export const handleCreateCommentFormSubmit = (postId, clearError, showError) => {
     const form = document.getElementById("create-comment-form");
     if (form) {
-        form.removeEventListener("submit", (e) => handleCreateCommentSubmit(e, postId));
-        form.addEventListener("submit", (e) => handleCreateCommentSubmit(e, postId), { once: true });
+        form.addEventListener("submit", (e) => handleCreateCommentSubmit(e, postId, clearError, showError));
     }
 };
 
-async function handleCreateCommentSubmit(e, postId) {
+async function handleCreateCommentSubmit(e, postId, clearError, showError) {
     e.preventDefault();
     clearError();
     const content = document.getElementById("content").value;
     const messageElement = document.getElementById("comment-message");
+
+    console.log("Content value:", content);
+
     if (!content) {
         showError("Content is required");
         return;
@@ -49,12 +51,22 @@ async function handleCreateCommentSubmit(e, postId) {
     }
 }
 
-
 export const loadAndRenderComments = async (postId) => {
     try {
         const commentsContainer = document.getElementById("comments-container");
-        if (!commentsContainer) return;
+        if (!commentsContainer) {
+            console.error("Comments container not found");
+            return;
+        }
+
         const comments = await getComments(postId);
+        
+        // Перевіряємо, чи `comments` є масивом
+        if (!Array.isArray(comments)) {
+            console.error("Expected comments to be an array, got:", comments);
+            return;
+        }
+
         commentsContainer.innerHTML = "";
         comments.forEach(comment => {
             const commentElement = document.createElement("div");

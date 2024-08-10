@@ -39,7 +39,7 @@ export default class extends AbstractView {
         }
 
         handleCreateCommentFormSubmit(this.params.id, () => {
-            document.getElementById("content").value = ''; 
+            document.getElementById("content").value; 
         }, (error) => {
             console.error("Failed to submit comment:", error);
         });

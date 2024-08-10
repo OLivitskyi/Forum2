@@ -4,9 +4,9 @@ export const sendRequest = async (url, method, body = null) => {
     const headers = new Headers();
     headers.append('Content-Type', 'application/json');
     
-    const sessionToken = document.cookie.split('; ').find(row => row.startsWith('session_token='));
+    const sessionToken = localStorage.getItem('session_token'); // Отримуємо токен з localStorage
     if (sessionToken) {
-        headers.append('Authorization', `Bearer ${sessionToken.split('=')[1]}`);
+        headers.append('Authorization', `Bearer ${sessionToken}`);
     }
 
     const response = await fetch(url, {
@@ -16,7 +16,7 @@ export const sendRequest = async (url, method, body = null) => {
     });
 
     if (response.status === 401) {
-        navigateTo("/");
+        navigateTo("/"); // Перенаправлення на головну сторінку при неавторизованому доступі
     }
 
     return response;
@@ -34,7 +34,8 @@ export const createPost = async (post) => {
     return fetch('/api/create-post', {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('session_token')}` // Додаємо токен тут
         },
         body: JSON.stringify(post)
     });
@@ -94,17 +95,21 @@ export const createComment = async (comment) => {
 };
 
 export const getComments = async (postId) => {
-    if (!validateUUID(postId)) {
-        throw new Error("Invalid post ID format");
+    try {
+        const response = await sendRequest(`/api/post-comments/${postId}`, "GET");
+        if (!response || !response.ok) {
+            const errorText = await response.text();
+            throw new Error("Failed to fetch comments: " + errorText);
+        }
+        
+        const comments = await response.json();
+        
+        // Переконайтесь, що повертається масив
+        return Array.isArray(comments) ? comments : [];
+    } catch (error) {
+        console.error("Failed to get comments:", error);
+        return []; // Повертаємо порожній масив у випадку помилки
     }
-
-    const response = await sendRequest(`/api/post-comments/${postId}`, "GET");
-    if (!response || !response.ok) {
-        const errorText = await response.text();
-        throw new Error("Failed to fetch comments: " + errorText);
-    }
-
-    return response.json();
 };
 
 function validateUUID(uuid) {

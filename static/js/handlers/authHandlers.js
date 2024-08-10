@@ -1,6 +1,5 @@
 import { navigateTo } from '../routeUtils.js';
 import { sendRequest } from '../api.js';
-import { connectWebSocket, setupWebSocketHandlers } from '../websocket.js';
 import { showError, clearError } from '../errorHandler.js';
 import { connectAfterLogin } from '../auth.js';
 
