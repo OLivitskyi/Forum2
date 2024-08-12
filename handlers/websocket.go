@@ -73,6 +73,7 @@ func (cm CommentMessage) Process() {
 type PrivateMessage struct {
 	MessageID  uuid.UUID `json:"message_id"`
 	SenderID   uuid.UUID `json:"sender_id"`
+	SenderName string    `json:"sender_name"`
 	ReceiverID uuid.UUID `json:"receiver_id"`
 	Content    string    `json:"content"`
 	Timestamp  time.Time `json:"timestamp"`
@@ -189,9 +190,13 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 				log.Printf("Error unmarshalling private message data: %v", err)
 				continue
 			}
-			log.Printf("Received private message from user %s to user %s: %v", userID, privateMsg.ReceiverID, privateMsg.Content)
 			privateMsg.MessageID = uuid.Must(uuid.NewV4())
 			privateMsg.SenderID = userID
+			privateMsg.SenderName, err = db.GetUsernameByID(userID) // Отримати ім'я відправника
+			if err != nil {
+				log.Printf("Failed to retrieve sender name: %v", err)
+				continue
+			}
 			privateMsg.Timestamp = time.Now()
 
 			// Save message to the database

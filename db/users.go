@@ -175,3 +175,13 @@ func GetAllUsersWithStatus() ([]UserStatus, error) {
 	}
 	return statuses, nil
 }
+
+// GetUsernameByID retrieves the username of a user by their ID.
+func GetUsernameByID(userID uuid.UUID) (string, error) {
+	var username string
+	err := DB.QueryRow("SELECT username FROM users WHERE user_id = ?", userID).Scan(&username)
+	if err != nil {
+		return "", err
+	}
+	return username, nil
+}

@@ -1,4 +1,5 @@
 import { navigateToPostDetails } from './routeUtils.js';
+import { handlePrivateMessage } from './handlers/messageHandlers.js';
 
 let socket;
 let isConnected = false;
@@ -47,6 +48,9 @@ const connectWebSocket = () => {
                 break;
             case "user_status":
                 handleUserStatus(message.data);
+                break;
+            case "private_message":
+                handlePrivateMessage(message.data); // Нова обробка приватних повідомлень
                 break;
             default:
                 console.warn("Unknown message type:", message.type);
@@ -138,6 +142,7 @@ const handleUserStatus = (users) => {
         users.forEach(user => {
             const userElement = document.createElement("div");
             userElement.classList.add("user-box");
+            userElement.dataset.userId = user.user_id; // Додаємо атрибут data-user-id
             const statusClass = user.is_online ? "logged-in" : "logged-out";
             userElement.innerHTML = `<span class="${statusClass}">●</span>${user.username}`;
             userContainer.appendChild(userElement);
@@ -157,6 +162,25 @@ export const sendPost = (post) => {
 export const sendComment = (comment) => {
     sendMessage({ type: 'comment', data: comment });
 };
+
+export const sendPrivateMessage = (receiverID, content) => {
+    const message = {
+        type: 'private_message',
+        data: { 
+            receiver_id: receiverID, 
+            content: content, 
+            sender_name: localStorage.getItem('user_name'),
+            timestamp: new Date().toISOString() 
+        }
+    };
+
+    // Відправляємо повідомлення на сервер
+    sendMessage(message);
+
+    // Додаємо повідомлення до списку локально, щоб відправник побачив його одразу
+    handlePrivateMessage(message.data);
+};
+
 
 export const initializeWebSocket = (token) => {
     sessionToken = token;
