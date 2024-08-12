@@ -68,7 +68,7 @@ func CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 		Post:      *post,
 		Timestamp: time.Now(),
 	}
-	broadcast <- postMessage
+	postBroadcast <- postMessage
 
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(post)

@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gofrs/uuid"
 )
@@ -47,6 +48,18 @@ func SendMessageHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to send message", http.StatusInternalServerError)
 		return
 	}
+
+	// Після збереження повідомлення, відправити його через WebSocket
+	privateMsg := PrivateMessage{
+		MessageID:  uuid.Must(uuid.NewV4()),
+		SenderID:   senderID,
+		ReceiverID: receiverID,
+		Content:    requestData.Content,
+		Timestamp:  time.Now(),
+	}
+
+	privateMessageBroadcast <- privateMsg
+
 	w.WriteHeader(http.StatusOK)
 }
 
