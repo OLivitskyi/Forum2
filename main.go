@@ -80,4 +80,5 @@ func apiRoutes() {
 	http.Handle("/api/update-status", handlers.RequireLogin(http.HandlerFunc(handlers.UpdateStatusHandler)))
 	http.Handle("/api/get-user-status", handlers.RequireLogin(http.HandlerFunc(handlers.GetUserStatusHandler)))
 	http.Handle("/api/get-users", handlers.RequireLogin(http.HandlerFunc(handlers.GetUsersHandler)))
+	http.Handle("/api/get-user-info", handlers.RequireLogin(http.HandlerFunc(handlers.GetUserInfoHandler)))
 }

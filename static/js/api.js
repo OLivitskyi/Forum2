@@ -115,3 +115,24 @@ function validateUUID(uuid) {
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     return uuidRegex.test(uuid);
 }
+
+export const getUserInfo = async () => {
+    try {
+        const response = await fetch('/api/get-user-info', {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('session_token')}`,
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to fetch user info');
+        }
+
+        const userInfo = await response.json();
+        return userInfo;
+    } catch (error) {
+        console.error('Error fetching user info:', error);
+        return null;
+    }
+};

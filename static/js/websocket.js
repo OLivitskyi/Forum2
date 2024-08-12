@@ -163,13 +163,20 @@ export const sendComment = (comment) => {
     sendMessage({ type: 'comment', data: comment });
 };
 
-export const sendPrivateMessage = (receiverID, content) => {
+export const sendPrivateMessage = async (receiverID, content) => {
+    const username = localStorage.getItem('user_name');
+    
+    if (!username) {
+        console.error('User name not found in localStorage');
+        return;
+    }
+
     const message = {
         type: 'private_message',
         data: { 
             receiver_id: receiverID, 
             content: content, 
-            sender_name: localStorage.getItem('user_name'),
+            sender_name: username, // Використовуємо ім'я користувача з localStorage
             timestamp: new Date().toISOString() 
         }
     };
@@ -180,7 +187,6 @@ export const sendPrivateMessage = (receiverID, content) => {
     // Додаємо повідомлення до списку локально, щоб відправник побачив його одразу
     handlePrivateMessage(message.data);
 };
-
 
 export const initializeWebSocket = (token) => {
     sessionToken = token;
