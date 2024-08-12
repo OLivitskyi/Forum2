@@ -3,7 +3,6 @@ import { createPost, getPosts, getPost } from '../api.js';
 import { showError, clearError } from '../errorHandler.js';
 import { sendPost } from '../websocket.js';
 import { loadAndRenderComments } from './commentHandlers.js';
-
 export const handleCreatePostFormSubmit = (clearError, showError) => {
     const form = document.getElementById("create-post-form");
     if (form) {
@@ -11,7 +10,6 @@ export const handleCreatePostFormSubmit = (clearError, showError) => {
         form.addEventListener("submit", handleCreatePostSubmit, { once: true });
     }
 };
-
 async function handleCreatePostSubmit(e) {
     e.preventDefault();
     clearError();
@@ -33,10 +31,8 @@ async function handleCreatePostSubmit(e) {
         if (response.ok) {
             clearError();
             navigateTo("/homepage");
-
             const post = await response.json();
             console.log("Post created, sending via WebSocket:", post);
-            
             sendPost(post);
         } else {
             const errorText = await response.text();
@@ -46,7 +42,6 @@ async function handleCreatePostSubmit(e) {
         showError("An error occurred. Please try again.");
     }
 };
-
 export const loadAndRenderSinglePost = async (postId) => {
     try {
         console.log("Loading post details for post ID:", postId);
@@ -55,17 +50,15 @@ export const loadAndRenderSinglePost = async (postId) => {
             console.error("Post container not found");
             return;
         }
-
         const post = await getPost(postId);
         if (!post) {
             console.error("Post data is missing");
             return;
         }
-
         postContainer.innerHTML = `
             <div>
-                <div>${post.subject}</div>
-                <p>${post.content}</p>
+                <div class="post-container-title">${post.subject}</div>
+                <div class="post-container-content">${post.content}</div>
                 <div>
                     <span>Likes: ${post.like_count}</span>
                     <span>Dislikes: ${post.dislike_count}</span>
@@ -97,12 +90,10 @@ export const loadAndRenderPosts = async () => {
                     <span>Dislikes: ${post.dislike_count}</span>
                 </div>
             `;
-
-            // Прив'язуємо подію кліку для відкриття посту
+            // Binding click event to open the post
             postElement.addEventListener('click', () => {
                 navigateToPostDetails(post.id);
             });
-
             postsContainer.appendChild(postElement);
         });
     } catch (error) {

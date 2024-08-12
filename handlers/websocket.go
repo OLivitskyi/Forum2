@@ -67,6 +67,22 @@ func (cm CommentMessage) Process() {
 	broadcastMessageToAll("comment", completeComment)
 }
 
+type PrivateMessage struct {
+	MessageID uuid.UUID `json:"message_id"`
+	SenderID  uuid.UUID `json:"sender_id"`
+	ReceiverID uuid.UUID `json:"receiver_id"`
+	Content   string    `json:"content"`
+	Timestamp time.Time `json:"timestamp"`
+}
+
+func (pm PrivateMessage) Process() {
+	if isProcessed(pm.MessageID) {
+		return
+	}
+	broadcastPrivateMessageToClient(pm.ReceiverID, pm)
+}
+
+
 func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 	ws, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -157,6 +173,27 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 			case "request_user_status":
 				log.Printf("Received request for user status from user %s", userID)
 				broadcastUserStatusToClient(ws)
+			case "private_message":
+				var privateMsg PrivateMessage
+				messageData, _ := json.Marshal(message["data"])
+				if err := json.Unmarshal(messageData, &privateMsg); err != nil {
+					log.Printf("Error unmarshalling private message data: %v", err)
+					continue
+				}
+				log.Printf("Received private message from user %s to user %s: %v", userID, privateMsg.ReceiverID, privateMsg.Content)
+				privateMsg.MessageID = uuid.Must(uuid.NewV4())
+				privateMsg.SenderID = userID
+				privateMsg.Timestamp = time.Now()
+
+				// Зберегти повідомлення в базу даних
+				err = db.AddMessage(privateMsg.SenderID, privateMsg.ReceiverID, privateMsg.Content)
+				if err != nil {
+					log.Printf("Failed to save private message: %v", err)
+					continue
+				}
+
+				broadcast <- privateMsg
+
 			default:
 				log.Printf("Unknown message type: %v", messageType)
 			}
@@ -254,5 +291,24 @@ func broadcastMessageToClient(client *websocket.Conn, messageType string, data i
 		mutex.Lock()
 		delete(clients, client)
 		mutex.Unlock()
+	}
+}
+
+func broadcastPrivateMessageToClient(receiverID uuid.UUID, message PrivateMessage) {
+	messageJSON := map[string]interface{}{
+		"type": "private_message",
+		"data": message,
+	}
+	for client, id := range clients {
+		if id == receiverID {
+			err := client.WriteJSON(messageJSON)
+			if err != nil {
+				log.Printf("Error writing to websocket: %v", err)
+				client.Close()
+				mutex.Lock()
+				delete(clients, client)
+				mutex.Unlock()
+			}
+		}
 	}
 }

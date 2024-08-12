@@ -66,3 +66,5 @@ func MarkMessageAsRead(messageID uuid.UUID, userID uuid.UUID) error {
 	}
 	return nil
 }
+
+

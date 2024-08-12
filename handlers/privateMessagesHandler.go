@@ -10,7 +10,7 @@ import (
 	"github.com/gofrs/uuid"
 )
 
-// SendMessageHandler handles sending a message
+// SendMessageHandler handles sending a message.
 func SendMessageHandler(w http.ResponseWriter, r *http.Request) {
 	senderID, err := getUserIDFromSession(r)
 	if err != nil {
@@ -50,7 +50,7 @@ func SendMessageHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-// GetMessagesHandler handles fetching messages
+// GetMessagesHandler handles fetching messages.
 func GetMessagesHandler(w http.ResponseWriter, r *http.Request) {
 	userID, err := getUserIDFromSession(r)
 	if err != nil {
@@ -86,7 +86,7 @@ func GetMessagesHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(messages)
 }
 
-// UpdateStatusHandler handles updating user status
+// UpdateStatusHandler handles updating user status.
 func UpdateStatusHandler(w http.ResponseWriter, r *http.Request) {
 	userID, err := getUserIDFromSession(r)
 	if err != nil {
@@ -118,7 +118,7 @@ func UpdateStatusHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-// GetUserStatusHandler handles fetching user statuses
+// GetUserStatusHandler handles fetching user statuses.
 func GetUserStatusHandler(w http.ResponseWriter, r *http.Request) {
 	statuses, err := db.GetUserStatus()
 	if err != nil {
@@ -130,7 +130,7 @@ func GetUserStatusHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(statuses)
 }
 
-// MarkMessageAsReadHandler handles marking a message as read
+// MarkMessageAsReadHandler handles marking a message as read.
 func MarkMessageAsReadHandler(w http.ResponseWriter, r *http.Request) {
 	userID, err := getUserIDFromSession(r)
 	if err != nil {
@@ -167,9 +167,15 @@ func MarkMessageAsReadHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-// GetUsersHandler handles fetching users
+// GetUsersHandler handles fetching users.
 func GetUsersHandler(w http.ResponseWriter, r *http.Request) {
-	users, err := db.GetUsersOrderedByLastMessageOrAlphabetically()
+	userID, err := getUserIDFromSession(r)
+	if err != nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	users, err := db.GetUsersOrderedByLastMessageOrAlphabetically(userID)
 	if err != nil {
 		http.Error(w, "Failed to get users", http.StatusInternalServerError)
 		return

@@ -121,18 +121,19 @@ func GetUserIDByUsernameOrEmail(usernameOrEmail string) (uuid.UUID, error) {
 	return userID, nil
 }
 
-// GetUsersOrderedByLastMessageOrAlphabetically retrieves users ordered by last message time or alphabetically.
-func GetUsersOrderedByLastMessageOrAlphabetically() ([]User, error) {
+// GetUsersOrderedByLastMessageOrAlphabetically returns users ordered by the last message sent or alphabetically if no messages exist.
+func GetUsersOrderedByLastMessageOrAlphabetically(userID uuid.UUID) ([]User, error) {
 	if DB == nil {
 		return nil, fmt.Errorf("db connection failed")
 	}
 	rows, err := DB.Query(`
-	SELECT users.user_id, users.username, MAX(messages.created_at) AS last_message_time
-	FROM users
-	LEFT JOIN messages ON users.user_id = messages.sender_id OR users.user_id = messages.receiver_id
-	GROUP BY users.user_id
-	ORDER BY last_message_time DESC, users.username ASC
-	`)
+		SELECT u.user_id, u.username, COALESCE(MAX(m.created_at), '1970-01-01') as last_message
+		FROM users u
+		LEFT JOIN messages m ON (u.user_id = m.sender_id OR u.user_id = m.receiver_id) AND (m.sender_id = ? OR m.receiver_id = ?)
+		WHERE u.user_id != ?
+		GROUP BY u.user_id
+		ORDER BY last_message DESC, u.username ASC
+	`, userID, userID, userID)
 	if err != nil {
 		return nil, err
 	}
