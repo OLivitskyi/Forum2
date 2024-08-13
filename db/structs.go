@@ -1,6 +1,7 @@
 package db
 
 import (
+	"database/sql"
 	"time"
 
 	"github.com/gofrs/uuid"
@@ -34,10 +35,10 @@ type Message struct {
 }
 
 type UserStatus struct {
-	UserID       uuid.UUID `json:"user_id"`
-	Username     string    `json:"username"`
-	IsOnline     bool      `json:"is_online"`
-	LastActivity time.Time `json:"last_activity"`
+	UserID       uuid.UUID    `json:"user_id"`
+	Username     string       `json:"username"`
+	IsOnline     bool         `json:"is_online"`
+	LastActivity sql.NullTime `json:"last_activity"`
 }
 
 type WebSocketMessage struct {

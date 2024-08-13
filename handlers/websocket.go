@@ -93,33 +93,38 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Error upgrading to websocket: %v", err)
 		return
 	}
-	defer func() {
-		userID := clients[ws]
-		mutex.Lock()
-		delete(clients, ws)
-		mutex.Unlock()
-		db.UpdateUserStatus(userID, false)
-		ws.Close()
-		log.Printf("User %s disconnected", userID)
-		broadcastUserStatus() // Broadcast user status when someone disconnects
-	}()
+	defer ws.Close()
 
 	sessionToken := r.URL.Query().Get("session_token")
 	if sessionToken == "" {
 		log.Println("Unauthorized access: session token missing")
+		ws.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, "Session token missing"))
 		return
 	}
+
 	userID, err := db.GetUserIDFromSession(sessionToken)
 	if err != nil {
 		log.Printf("Unauthorized access: %v", err)
+		ws.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, "Invalid session token"))
 		return
 	}
+
 	log.Printf("User %s connected", userID)
 	mutex.Lock()
 	clients[ws] = userID
 	mutex.Unlock()
+
+	defer func() {
+		mutex.Lock()
+		delete(clients, ws)
+		mutex.Unlock()
+		db.UpdateUserStatus(userID, false)
+		log.Printf("User %s disconnected", userID)
+		broadcastUserStatus()
+	}()
+
 	db.UpdateUserStatus(userID, true)
-	broadcastUserStatus() // Broadcast user status when someone connects
+	broadcastUserStatus()
 
 	for {
 		_, msg, err := ws.ReadMessage()
@@ -199,7 +204,6 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 			}
 			privateMsg.Timestamp = time.Now()
 
-			// Save message to the database
 			err = db.AddMessage(privateMsg.SenderID, privateMsg.ReceiverID, privateMsg.Content)
 			if err != nil {
 				log.Printf("Failed to save private message: %v", err)
@@ -264,7 +268,6 @@ func broadcastUserStatusToClient(client *websocket.Conn) {
 	broadcastMessageToClient(client, "user_status", users)
 }
 
-// New helper functions
 func isProcessed(messageID uuid.UUID) bool {
 	mutex.Lock()
 	defer mutex.Unlock()

@@ -156,7 +156,7 @@ func GetAllUsersWithStatus() ([]UserStatus, error) {
 		return nil, fmt.Errorf("db connection failed")
 	}
 	rows, err := DB.Query(`
-		SELECT users.user_id, users.username, user_status.is_online, user_status.last_activity
+		SELECT users.user_id, users.username, COALESCE(user_status.is_online, false), user_status.last_activity
 		FROM users
 		LEFT JOIN user_status ON users.user_id = user_status.user_id
 	`)

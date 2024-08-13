@@ -3,8 +3,8 @@ import { navigateTo } from './routeUtils.js';
 export const sendRequest = async (url, method, body = null) => {
     const headers = new Headers();
     headers.append('Content-Type', 'application/json');
-    
-    const sessionToken = localStorage.getItem('session_token'); 
+
+    const sessionToken = localStorage.getItem('session_token');
     if (sessionToken) {
         headers.append('Authorization', `Bearer ${sessionToken}`);
     }
@@ -16,7 +16,7 @@ export const sendRequest = async (url, method, body = null) => {
     });
 
     if (response.status === 401) {
-        navigateTo("/"); 
+        navigateTo("/");
     }
 
     return response;
@@ -74,7 +74,7 @@ export const createComment = async (comment) => {
 
     if (response.status === 201) {
         console.log("Comment created successfully.");
-        return {}; 
+        return {};
     }
 
     if (!response || !response.ok) {
@@ -101,9 +101,9 @@ export const getComments = async (postId) => {
             const errorText = await response.text();
             throw new Error("Failed to fetch comments: " + errorText);
         }
-        
+
         const comments = await response.json();
-        
+
         return Array.isArray(comments) ? comments : [];
     } catch (error) {
         console.error("Failed to get comments:", error);

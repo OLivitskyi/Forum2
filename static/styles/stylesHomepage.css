@@ -411,20 +411,32 @@ button[type="submit"]:hover {
     width: 500px;
     background-color: #FFBB55;
     border: 1px solid #62616C;
+    display: flex;
+    flex-direction: column;
+    height: 100%; /* Займає всю доступну висоту */
 }
+
 .message-list {
     flex: 1; /* message list take up all available space */
-    overflow-y: scroll; /* scrollbar if messages exceed height */
+    overflow-y: auto; /* scrollbar if messages exceed height */
     padding: 10px;
+    display: flex;
+    flex-direction: column-reverse; /* Нові повідомлення з'являються знизу */
+    height: 300px; /* обмеження висоти для скролінгу */
 }
+
 .chatbox {
     display: flex;
     height: 40px;
+    border-top: 1px solid #62616C;
 }
+
 #message-input {
     flex: 1;
     border: 1px solid rgb(126, 255, 114);
+    padding: 5px; /* додаткове відступ для зручності */
 }
+
 #send-button {
     padding: 5px 30px;
     border-radius: 5px;
@@ -433,30 +445,39 @@ button[type="submit"]:hover {
     cursor: pointer;
     font-weight: 800;
 }
+
 #send-button:hover {
     background-color: #FA71B8;
 }
+
 .message {
     display: flex;
     margin-bottom: 10px;
 }
+
 .user-message {
     justify-content: flex-end;
 }
+
 .other-user-message {
     justify-content: flex-start;
 }
+
 .message-content {
     max-width: 80%;
     padding: 10px;
     border-radius: 10px;
+    word-wrap: break-word; /* Переносити слова на новий рядок при необхідності */
 }
+
 .user-message .message-content {
     background-color: #6DD9DF;
 }
+
 .other-user-message .message-content {
     background-color: #F2F2F2;
 }
+
 
 #popup-notification {
     position: fixed;

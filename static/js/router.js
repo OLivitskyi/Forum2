@@ -62,7 +62,7 @@ const setupElementHandlers = () => {
             e.preventDefault();
             navigateTo("/messages");
 
-            
+
             const currentReceiverID = localStorage.getItem('current_receiver_id');
             if (currentReceiverID) {
                 markMessagesAsRead(currentReceiverID);

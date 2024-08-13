@@ -74,8 +74,8 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		CloseSession(w, r)
-		db.UpdateUserStatus(userID, false)
-		broadcastUserStatus()             
+		db.UpdateUserStatus(userID, false) // Update user status to offline
+		broadcastUserStatus()
 	}
 	if r.Header.Get("Accept") == "application/json" {
 		w.Header().Set("Content-Type", "application/json")
@@ -126,7 +126,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	})
 
 	db.UpdateUserStatus(userID, true)
-	broadcastUserStatus()             
+	broadcastUserStatus()
 	log.Printf("User %s logged in with session token %s", login.Username, token)
 
 	w.WriteHeader(http.StatusOK)

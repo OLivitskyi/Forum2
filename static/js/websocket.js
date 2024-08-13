@@ -31,16 +31,19 @@ const connectWebSocket = () => {
             sendMessage(message);
         }
 
-        // Send login message
-        sendMessage({ type: 'login' });
-        
-        // Request user status after connection is re-established
+        // Request user status after connection is established
         requestUserStatus();
     };
 
     socket.onmessage = (event) => {
         const message = JSON.parse(event.data);
         console.log("Received message:", message);
+
+        if (message.type === "error" && message.data === "Unauthorized") {
+            console.error("Unauthorized access, please log in again.");
+            socket.close(); // Close the socket if unauthorized
+            return;
+        }
 
         switch (message.type) {
             case "post":
@@ -53,7 +56,7 @@ const connectWebSocket = () => {
                 handleUserStatus(message.data);
                 break;
             case "private_message":
-                handlePrivateMessage(message.data); 
+                handlePrivateMessage(message.data);
                 break;
             default:
                 console.warn("Unknown message type:", message.type);
@@ -63,6 +66,12 @@ const connectWebSocket = () => {
     socket.onclose = (event) => {
         isConnected = false;
         console.log("Disconnected from WebSocket server, code:", event.code, "reason:", event.reason);
+
+        if (event.code === 1000) {
+            // Normal closure
+            console.log("Connection closed normally.");
+            return;
+        }
 
         if (reconnectAttempts < maxReconnectAttempts) {
             reconnectAttempts++;
@@ -77,7 +86,6 @@ const connectWebSocket = () => {
         console.error("WebSocket error:", error);
     };
 };
-
 
 const sendMessage = (message) => {
     if (isConnected && socket && socket.readyState === WebSocket.OPEN) {
@@ -139,9 +147,19 @@ const handleUserStatus = (users) => {
     const userContainer = document.getElementById("box1");
     if (!userContainer) return;
 
-    const currentUserId = localStorage.getItem('user_id'); 
+    const currentUserId = localStorage.getItem('user_id');
 
-    userContainer.innerHTML = ''; 
+    userContainer.innerHTML = '';
+
+    users.sort((a, b) => {
+        const aLastMessageTime = new Date(a.last_message_time || 0);
+        const bLastMessageTime = new Date(b.last_message_time || 0);
+
+        if (aLastMessageTime > bLastMessageTime) return -1;
+        if (aLastMessageTime < bLastMessageTime) return 1;
+
+        return a.username.localeCompare(b.username);
+    });
 
     users
         .filter(user => user.user_id !== currentUserId)
@@ -154,7 +172,6 @@ const handleUserStatus = (users) => {
             userContainer.appendChild(userElement);
         });
 };
-
 
 export const requestUserStatus = () => {
     sendMessage({ type: 'request_user_status' });
@@ -170,7 +187,7 @@ export const sendComment = (comment) => {
 
 export const sendPrivateMessage = async (receiverID, content) => {
     const username = localStorage.getItem('user_name');
-    
+
     if (!username) {
         console.error('User name not found in localStorage');
         return;
@@ -178,15 +195,14 @@ export const sendPrivateMessage = async (receiverID, content) => {
 
     const message = {
         type: 'private_message',
-        data: { 
-            receiver_id: receiverID, 
-            content: content, 
-            sender_name: username, 
-            timestamp: new Date().toISOString() 
+        data: {
+            receiver_id: receiverID,
+            content: content,
+            sender_name: username,
+            timestamp: new Date().toISOString()
         }
     };
 
-    
     sendMessage(message);
     handlePrivateMessage(message.data);
 };
@@ -200,4 +216,3 @@ export const initializeWebSocket = (token = null) => {
         console.error("No session token available to initialize WebSocket connection");
     }
 };
-
