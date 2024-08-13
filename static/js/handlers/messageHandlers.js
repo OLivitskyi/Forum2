@@ -18,10 +18,12 @@ export const setupMessageForm = () => {
 };
 
 export const loadMessages = async (receiverID, loadMore = false) => {
+    let offset = 0;
+
     if (loadMore) {
         offset += 10;
     } else {
-        offset = 0; // reset offset if it's a fresh load
+        offset = 0;
     }
 
     try {
@@ -31,7 +33,7 @@ export const loadMessages = async (receiverID, loadMore = false) => {
         const messageList = document.querySelector(".message-list");
 
         if (!loadMore) {
-            messageList.innerHTML = ""; // Очищення попередніх повідомлень
+            messageList.innerHTML = "";
         }
 
         if (Array.isArray(messages) && messages.length > 0) {
@@ -40,12 +42,12 @@ export const loadMessages = async (receiverID, loadMore = false) => {
                 messageElement.classList.add(msg.sender_id === receiverID ? "other-user-message" : "user-message");
                 messageElement.innerHTML = `
                     <div class="message-content">
-                        <strong>${msg.sender_name}:</strong> ${msg.content}
-                        <div class="message-time">${new Date(msg.timestamp).toLocaleString()}</div>
+                        <strong>${msg.sender_name || 'Unknown User'}:</strong> ${msg.content}
+                        <div class="message-time">${new Date(msg.created_at).toLocaleString()}</div>
                     </div>
                 `;
                 if (loadMore) {
-                    messageList.insertBefore(messageElement, messageList.firstChild); // Додає нові повідомлення на початок
+                    messageList.insertBefore(messageElement, messageList.firstChild);
                 } else {
                     messageList.appendChild(messageElement);
                 }

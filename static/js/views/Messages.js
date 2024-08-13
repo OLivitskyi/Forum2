@@ -2,6 +2,7 @@ import AbstractView from "./AbstractView.js";
 import { getLayoutHtml } from "./layout.js";
 import { requestUserStatus } from "../websocket.js";
 import { setupMessageForm, loadMessages, setupMessageListScroll, setCurrentReceiver } from "../handlers/messageHandlers.js";
+import { getUserInfo } from "../api.js"; 
 
 export default class extends AbstractView {
     constructor(params) {
@@ -28,7 +29,8 @@ export default class extends AbstractView {
             </div>
         `;
 
-        setTimeout(() => {
+        setTimeout(async () => {
+            this.currentUserInfo = await getUserInfo();
             this.initializeEvents();
             requestUserStatus();
         }, 0);
@@ -37,18 +39,25 @@ export default class extends AbstractView {
     }
 
     initializeEvents() {
-      const userList = document.getElementById("box1");
-  
-      userList.addEventListener("click", (event) => {
-          const target = event.target.closest(".user-box");
-          if (target) {
-              const receiverID = target.dataset.userId;
-              setCurrentReceiver(receiverID);
-              loadMessages(receiverID); // Load messages for the selected user
-          }
-      });
-  
-      setupMessageForm();
-      setupMessageListScroll();
-  }  
+        const userList = document.getElementById("box1");
+        const currentUserId = this.currentUserInfo.user_id;
+
+        userList.addEventListener("click", (event) => {
+            const target = event.target.closest(".user-box");
+            if (target) {
+                const receiverID = target.dataset.userId;
+                
+                if (receiverID === currentUserId) {
+                    alert("You cannot send messages to yourself.");
+                    return;
+                }
+
+                setCurrentReceiver(receiverID);
+                loadMessages(receiverID); // Load messages for the selected user
+            }
+        });
+
+        setupMessageForm();
+        setupMessageListScroll();
+    }
 }

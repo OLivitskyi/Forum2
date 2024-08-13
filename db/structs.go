@@ -30,6 +30,7 @@ type Message struct {
 	Content    string    `json:"content"`
 	CreatedAt  time.Time `json:"created_at"`
 	IsRead     bool      `json:"is_read"`
+	SenderName string    `json:"sender_name"`
 }
 
 type UserStatus struct {

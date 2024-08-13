@@ -136,19 +136,24 @@ const handleComment = (comment) => {
 
 const handleUserStatus = (users) => {
     const userContainer = document.getElementById("box1");
-    if (userContainer) {
-        userContainer.innerHTML = ''; // Clear current content
+    if (!userContainer) return;
 
-        users.forEach(user => {
+    const currentUserId = localStorage.getItem('user_id'); 
+
+    userContainer.innerHTML = ''; 
+
+    users
+        .filter(user => user.user_id !== currentUserId)
+        .forEach(user => {
             const userElement = document.createElement("div");
             userElement.classList.add("user-box");
-            userElement.dataset.userId = user.user_id; // Додаємо атрибут data-user-id
+            userElement.dataset.userId = user.user_id;
             const statusClass = user.is_online ? "logged-in" : "logged-out";
             userElement.innerHTML = `<span class="${statusClass}">●</span>${user.username}`;
             userContainer.appendChild(userElement);
         });
-    }
 };
+
 
 // Додаємо функцію для запиту статусів користувачів
 export const requestUserStatus = () => {
