@@ -32,6 +32,7 @@ export const connectAfterLogin = async (token) => {
     localStorage.setItem('session_token', token);
     console.log("New token set in localStorage: ", localStorage.getItem('session_token'));
 
+    // Отримати інформацію про користувача одразу після логіну
     const userInfo = await getUserInfo();
     if (userInfo) {
         localStorage.setItem('user_id', userInfo.user_id);
