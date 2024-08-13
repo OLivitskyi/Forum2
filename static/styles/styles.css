@@ -147,7 +147,11 @@ body {
     margin-top: 15px;
 }
 .posts-container {
-    margin-top: 2rem;
+    padding-top: 2rem;
+    margin-top: 3rem;
+    position: absolute;
+    left: 33%;
+    top: -61px;
 }
 .post {
     padding: 1rem;
@@ -156,6 +160,7 @@ body {
     border-radius: 4px;
     background-color: #fff;
     width: 800px;
+    max-width: 100%;
 }
 .post h3 {
     margin-top: 0;

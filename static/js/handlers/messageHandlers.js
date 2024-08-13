@@ -18,12 +18,8 @@ export const setupMessageForm = () => {
 };
 
 export const loadMessages = async (receiverID, loadMore = false) => {
-    let offset = 0;
-
-    if (loadMore) {
-        offset += 10;
-    } else {
-        offset = 0;
+    if (!loadMore) {
+        offset = 0; // Reset offset if not loading more messages
     }
 
     try {
@@ -52,6 +48,8 @@ export const loadMessages = async (receiverID, loadMore = false) => {
                     messageList.appendChild(messageElement);
                 }
             });
+
+            offset += 10; // Increase offset for the next load
         } else if (!loadMore) {
             console.log("No messages found for this user.");
             messageList.innerHTML = "<p>No previous messages.</p>";
@@ -75,7 +73,7 @@ export const setupMessageListScroll = () => {
 
 export const setCurrentReceiver = (receiverID) => {
     currentReceiverID = receiverID;
-    offset = 0; 
+    offset = 0; // Reset offset when switching to a new receiver
 };
 
 const showPopupNotification = (message) => {
@@ -86,7 +84,7 @@ const showPopupNotification = (message) => {
 
         setTimeout(() => {
             notification.style.display = "none";
-        }, 3000);
+        }, 3000); // Hide after 3 seconds
     }
 };
 
@@ -94,9 +92,9 @@ export const handlePrivateMessage = (message) => {
     const messageList = document.querySelector(".message-list");
     const messagesLink = document.getElementById("messages");
 
-    if (messageList) {
+    if (messageList && message.sender_id === currentReceiverID) {
         const messageElement = document.createElement("div");
-        messageElement.classList.add(message.sender_id === currentReceiverID ? "other-user-message" : "user-message");
+        messageElement.classList.add("other-user-message");
         messageElement.innerHTML = `
             <div class="message-content">
                 <strong>${message.sender_name}:</strong> ${message.content}
@@ -106,15 +104,13 @@ export const handlePrivateMessage = (message) => {
         messageList.appendChild(messageElement);
         messageList.scrollTop = messageList.scrollHeight;
     } else {
-    
         showPopupNotification('You have a new message!');
-    
+        
         const messageCountElement = messagesLink.querySelector(".message-count");
         const currentCount = parseInt(messageCountElement.textContent, 10) || 0;
         messageCountElement.textContent = currentCount + 1;
     }
 };
-
 
 export const markMessagesAsRead = (receiverID) => {
     const messagesLink = document.getElementById("messages");
