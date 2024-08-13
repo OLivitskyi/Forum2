@@ -31,8 +31,8 @@ const connectWebSocket = () => {
             sendMessage(message);
         }
 
-        // Send login message
-        sendMessage({ type: 'login' });
+        // Після успішного підключення, запитуємо статус користувачів
+        requestUserStatus();
     };
 
     socket.onmessage = (event) => {
@@ -50,7 +50,7 @@ const connectWebSocket = () => {
                 handleUserStatus(message.data);
                 break;
             case "private_message":
-                handlePrivateMessage(message.data); // Нова обробка приватних повідомлень
+                handlePrivateMessage(message.data);
                 break;
             default:
                 console.warn("Unknown message type:", message.type);
@@ -68,9 +68,6 @@ const connectWebSocket = () => {
         } else {
             console.error("Max reconnect attempts reached. Could not reconnect to WebSocket server.");
         }
-
-        // Send logout message
-        sendMessage({ type: 'logout' });
     };
 
     socket.onerror = (error) => {
@@ -154,8 +151,7 @@ const handleUserStatus = (users) => {
         });
 };
 
-
-// Додаємо функцію для запиту статусів користувачів
+// Запит статусів користувачів після підключення
 export const requestUserStatus = () => {
     sendMessage({ type: 'request_user_status' });
 };
@@ -181,15 +177,12 @@ export const sendPrivateMessage = async (receiverID, content) => {
         data: { 
             receiver_id: receiverID, 
             content: content, 
-            sender_name: username, // Використовуємо ім'я користувача з localStorage
+            sender_name: username, 
             timestamp: new Date().toISOString() 
         }
     };
 
-    // Відправляємо повідомлення на сервер
     sendMessage(message);
-
-    // Додаємо повідомлення до списку локально, щоб відправник побачив його одразу
     handlePrivateMessage(message.data);
 };
 
