@@ -192,7 +192,7 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 			}
 			privateMsg.MessageID = uuid.Must(uuid.NewV4())
 			privateMsg.SenderID = userID
-			privateMsg.SenderName, err = db.GetUsernameByID(userID) // Отримати ім'я відправника
+			privateMsg.SenderName, err = db.GetUsernameByID(userID)
 			if err != nil {
 				log.Printf("Failed to retrieve sender name: %v", err)
 				continue

@@ -4,6 +4,7 @@ import { isAuthenticated } from './auth.js';
 import { handleLoginFormSubmit, handleLogout, handleCreatePostFormSubmit, handleCreateCategoryFormSubmit } from './eventHandlers.js';
 import { showError, clearError } from './errorHandler.js';
 import { setInputError, clearInputError, setupFormSwitching, setupFormValidation } from './formHandler.js';
+import { markMessagesAsRead } from './handlers/messageHandlers.js';
 
 export const router = async () => {
     console.log("Routing started");
@@ -54,12 +55,18 @@ const setupElementHandlers = () => {
         pill.addEventListener("click", () => pill.classList.toggle("pill--selected"));
     });
 
-    const messages = document.getElementById("messages");
-    if (messages) {
-        messages.addEventListener("click", async e => {
+    const messagesLink = document.getElementById("messages");
+    if (messagesLink) {
+        messagesLink.addEventListener("click", async e => {
             console.log("messages clicked");
             e.preventDefault();
             navigateTo("/messages");
+
+            
+            const currentReceiverID = localStorage.getItem('current_receiver_id');
+            if (currentReceiverID) {
+                markMessagesAsRead(currentReceiverID);
+            }
         });
     }
 
@@ -67,7 +74,7 @@ const setupElementHandlers = () => {
     if (createpost) {
         createpost.addEventListener("click", async e => {
             console.log("create post clicked");
-            e.preventDefault();
+            e.prevent.preventDefault();
             navigateTo("/create-post");
         });
     }

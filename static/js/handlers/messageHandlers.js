@@ -61,22 +61,6 @@ export const loadMessages = async (receiverID, loadMore = false) => {
     }
 };
 
-export const handlePrivateMessage = (message) => {
-    const messageList = document.querySelector(".message-list");
-    if (messageList) {
-        const messageElement = document.createElement("div");
-        messageElement.classList.add(message.sender_id === currentReceiverID ? "other-user-message" : "user-message");
-        messageElement.innerHTML = `
-            <div class="message-content">
-                <strong>${message.sender_name}:</strong> ${message.content}
-                <div class="message-time">${new Date(message.timestamp).toLocaleString()}</div>
-            </div>
-        `;
-        messageList.appendChild(messageElement);
-        messageList.scrollTop = messageList.scrollHeight;
-    }
-};
-
 export const setupMessageListScroll = () => {
     const messageList = document.querySelector(".message-list");
 
@@ -91,5 +75,57 @@ export const setupMessageListScroll = () => {
 
 export const setCurrentReceiver = (receiverID) => {
     currentReceiverID = receiverID;
-    offset = 0; // Reset offset when switching to a new receiver
+    offset = 0; 
+};
+
+const showPopupNotification = (message) => {
+    const notification = document.getElementById("popup-notification");
+    if (notification) {
+        notification.textContent = message;
+        notification.style.display = "block";
+
+        setTimeout(() => {
+            notification.style.display = "none";
+        }, 3000);
+    }
+};
+
+export const handlePrivateMessage = (message) => {
+    const messageList = document.querySelector(".message-list");
+    const messagesLink = document.getElementById("messages");
+
+    if (messageList) {
+        const messageElement = document.createElement("div");
+        messageElement.classList.add(message.sender_id === currentReceiverID ? "other-user-message" : "user-message");
+        messageElement.innerHTML = `
+            <div class="message-content">
+                <strong>${message.sender_name}:</strong> ${message.content}
+                <div class="message-time">${new Date(message.timestamp).toLocaleString()}</div>
+            </div>
+        `;
+        messageList.appendChild(messageElement);
+        messageList.scrollTop = messageList.scrollHeight;
+    } else {
+    
+        showPopupNotification('You have a new message!');
+    
+        const messageCountElement = messagesLink.querySelector(".message-count");
+        const currentCount = parseInt(messageCountElement.textContent, 10) || 0;
+        messageCountElement.textContent = currentCount + 1;
+    }
+};
+
+
+export const markMessagesAsRead = (receiverID) => {
+    const messagesLink = document.getElementById("messages");
+    const messageCountElement = messagesLink.querySelector(".message-count");
+    const currentCount = parseInt(messageCountElement.textContent, 10) || 0;
+
+    if (receiverID === currentReceiverID) {
+        const unreadMessages = document.querySelectorAll(".other-user-message.unread");
+        const unreadCount = unreadMessages.length;
+        unreadMessages.forEach(msg => msg.classList.remove("unread"));
+
+        messageCountElement.textContent = Math.max(currentCount - unreadCount, 0);
+    }
 };

@@ -71,8 +71,6 @@ const connectWebSocket = () => {
         } else {
             console.error("Max reconnect attempts reached. Could not reconnect to WebSocket server.");
         }
-
-        // No need to send a logout message here, as connection is already closed
     };
 
     socket.onerror = (error) => {
@@ -158,7 +156,6 @@ const handleUserStatus = (users) => {
 };
 
 
-// Додаємо функцію для запиту статусів користувачів
 export const requestUserStatus = () => {
     sendMessage({ type: 'request_user_status' });
 };
@@ -184,15 +181,13 @@ export const sendPrivateMessage = async (receiverID, content) => {
         data: { 
             receiver_id: receiverID, 
             content: content, 
-            sender_name: username, // Використовуємо ім'я користувача з localStorage
+            sender_name: username, 
             timestamp: new Date().toISOString() 
         }
     };
 
-    // Відправляємо повідомлення на сервер
+    
     sendMessage(message);
-
-    // Додаємо повідомлення до списку локально, щоб відправник побачив його одразу
     handlePrivateMessage(message.data);
 };
 

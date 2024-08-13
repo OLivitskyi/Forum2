@@ -19,7 +19,7 @@ export const getLayoutHtml = (content) => {
                     <a href="messages" data-link id="messages">
                         <span class="material-icons-sharp">mail_outline</span>
                         <h3>Messages</h3>
-                        <span class="message-count">27</span>
+                        <span class="message-count">0</span>
                     </a>
                     <a href="create-post" data-link id="create-post">
                         <span class="material-icons-sharp">add</span>
@@ -39,5 +39,6 @@ export const getLayoutHtml = (content) => {
                 ${content}
             </main>
         </div>
+        <div id="popup-notification">You have a new message!</div>
     `;
 };

@@ -127,13 +127,13 @@ func GetUsersOrderedByLastMessageOrAlphabetically(userID uuid.UUID) ([]User, err
 		return nil, fmt.Errorf("db connection failed")
 	}
 	rows, err := DB.Query(`
-		SELECT u.user_id, u.username, COALESCE(MAX(m.created_at), '1970-01-01') as last_message
-		FROM users u
-		LEFT JOIN messages m ON (u.user_id = m.sender_id OR u.user_id = m.receiver_id) AND (m.sender_id = ? OR m.receiver_id = ?)
-		WHERE u.user_id != ?
-		GROUP BY u.user_id
-		ORDER BY last_message DESC, u.username ASC
-	`, userID, userID, userID)
+        SELECT u.user_id, u.username, COALESCE(MAX(m.created_at), '1970-01-01') as last_message
+        FROM users u
+        LEFT JOIN messages m ON (u.user_id = m.sender_id OR u.user_id = m.receiver_id) AND (m.sender_id = ? OR m.receiver_id = ?)
+        WHERE u.user_id != ?
+        GROUP BY u.user_id
+        ORDER BY last_message DESC, u.username ASC
+    `, userID, userID, userID)
 	if err != nil {
 		return nil, err
 	}

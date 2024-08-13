@@ -57,7 +57,6 @@ export const loadAndRenderComments = async (postId) => {
 
         const comments = await getComments(postId);
         
-        // Перевіряємо, чи `comments` є масивом
         if (!Array.isArray(comments)) {
             console.error("Expected comments to be an array, got:", comments);
             return;

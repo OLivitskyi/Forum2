@@ -53,7 +53,7 @@ export default class extends AbstractView {
                 }
 
                 setCurrentReceiver(receiverID);
-                loadMessages(receiverID); // Load messages for the selected user
+                loadMessages(receiverID); 
             }
         });
 
