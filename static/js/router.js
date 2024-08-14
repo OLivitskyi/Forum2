@@ -62,7 +62,6 @@ const setupElementHandlers = () => {
             e.preventDefault();
             navigateTo("/messages");
 
-
             const currentReceiverID = localStorage.getItem('current_receiver_id');
             if (currentReceiverID) {
                 markMessagesAsRead(currentReceiverID);
@@ -72,30 +71,23 @@ const setupElementHandlers = () => {
 
     const createpost = document.getElementById("create-post");
     if (createpost) {
-        createpost.addEventListener("click", async e => {
-            console.log("create post clicked");
-            e.prevent.preventDefault();
+        createpost.addEventListener("click", e => {
+            e.preventDefault();
             navigateTo("/create-post");
         });
     }
 
     const createcategory = document.getElementById("create-category");
     if (createcategory) {
-        createcategory.addEventListener("click", async e => {
-            console.log("create category clicked");
+        createcategory.addEventListener("click", e => {
             e.preventDefault();
             navigateTo("/create-category");
         });
     }
 
-    if (location.pathname === "/create-category") {
-        handleCreateCategoryFormSubmit(clearError, showError);
-    }
-
     const homepage = document.getElementById("homepage");
     if (homepage) {
-        homepage.addEventListener("click", async e => {
-            console.log("homepage clicked");
+        homepage.addEventListener("click", e => {
             e.preventDefault();
             navigateTo("/homepage");
         });
@@ -117,6 +109,7 @@ const setupElementHandlers = () => {
         });
     });
 };
+
 
 window.addEventListener("popstate", router);
 
