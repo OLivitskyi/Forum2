@@ -54,16 +54,6 @@ func NewSession(w http.ResponseWriter, username string, userID uuid.UUID) (strin
 	return token.String(), nil
 }
 
-// isSessionUp checks if a session is active for the user
-func isSessionUp(username string) bool {
-	for _, a := range sessions {
-		if a.Username == username {
-			return true
-		}
-	}
-	return false
-}
-
 func ValidateSession(w http.ResponseWriter, r *http.Request) string {
 	token, err := getSessionToken(r)
 	if err != nil {

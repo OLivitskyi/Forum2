@@ -7,7 +7,7 @@ export default class extends AbstractView {
         this.setTitle("Registration");
     }
 
-    async getHtml() { 
+    async getHtml() {
         return `
         <form class="form" id="createAccount">
             <div class="container-login">

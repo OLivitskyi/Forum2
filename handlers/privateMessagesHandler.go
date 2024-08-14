@@ -49,7 +49,6 @@ func SendMessageHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Після збереження повідомлення, відправити його через WebSocket
 	privateMsg := PrivateMessage{
 		MessageID:  uuid.Must(uuid.NewV4()),
 		SenderID:   senderID,

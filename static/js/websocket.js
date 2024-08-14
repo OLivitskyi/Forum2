@@ -1,5 +1,5 @@
-import { navigateToPostDetails } from './routeUtils.js';
-import { handlePrivateMessage } from './handlers/messageHandlers.js';
+import { navigateToPostDetails } from "./routeUtils.js";
+import { handlePrivateMessage } from "./handlers/messageHandlers.js";
 
 let socket;
 let isConnected = false;
@@ -19,7 +19,9 @@ const connectWebSocket = () => {
         return;
     }
 
-    socket = new WebSocket(`ws://localhost:8080/ws?session_token=${sessionToken}`);
+    socket = new WebSocket(
+        `ws://localhost:8080/ws?session_token=${sessionToken}`
+    );
 
     socket.onopen = () => {
         console.log("Connected to WebSocket server");
@@ -31,7 +33,6 @@ const connectWebSocket = () => {
             sendMessage(message);
         }
 
-        // Request user status after connection is established
         requestUserStatus();
     };
 
@@ -41,7 +42,7 @@ const connectWebSocket = () => {
 
         if (message.type === "error" && message.data === "Unauthorized") {
             console.error("Unauthorized access, please log in again.");
-            socket.close(); // Close the socket if unauthorized
+            socket.close();
             return;
         }
 
@@ -65,7 +66,12 @@ const connectWebSocket = () => {
 
     socket.onclose = (event) => {
         isConnected = false;
-        console.log("Disconnected from WebSocket server, code:", event.code, "reason:", event.reason);
+        console.log(
+            "Disconnected from WebSocket server, code:",
+            event.code,
+            "reason:",
+            event.reason
+        );
 
         if (event.code === 1000) {
             // Normal closure
@@ -75,10 +81,14 @@ const connectWebSocket = () => {
 
         if (reconnectAttempts < maxReconnectAttempts) {
             reconnectAttempts++;
-            console.log(`Attempting to reconnect... (${reconnectAttempts}/${maxReconnectAttempts})`);
+            console.log(
+                `Attempting to reconnect... (${reconnectAttempts}/${maxReconnectAttempts})`
+            );
             setTimeout(connectWebSocket, 5000);
         } else {
-            console.error("Max reconnect attempts reached. Could not reconnect to WebSocket server.");
+            console.error(
+                "Max reconnect attempts reached. Could not reconnect to WebSocket server."
+            );
         }
     };
 
@@ -104,7 +114,9 @@ const handlePost = (post) => {
             return;
         }
 
-        const categories = post.categories.map(category => `<span class="category">${category.name}</span>`).join(', ');
+        const categories = post.categories
+            .map((category) => `<span class="category">${category.name}</span>`)
+            .join(", ");
         const postElement = document.createElement("div");
         postElement.classList.add("post");
         postElement.id = `post-${post.id}`;
@@ -118,7 +130,7 @@ const handlePost = (post) => {
             </div>
         `;
 
-        postElement.addEventListener('click', () => {
+        postElement.addEventListener("click", () => {
             navigateToPostDetails(post.id);
         });
 
@@ -147,9 +159,9 @@ const handleUserStatus = (users) => {
     const userContainer = document.getElementById("box1");
     if (!userContainer) return;
 
-    const currentUserId = localStorage.getItem('user_id');
+    const currentUserId = localStorage.getItem("user_id");
 
-    userContainer.innerHTML = '';
+    userContainer.innerHTML = "";
 
     users.sort((a, b) => {
         const aLastMessageTime = new Date(a.last_message_time || 0);
@@ -162,8 +174,8 @@ const handleUserStatus = (users) => {
     });
 
     users
-        .filter(user => user.user_id !== currentUserId)
-        .forEach(user => {
+        .filter((user) => user.user_id !== currentUserId)
+        .forEach((user) => {
             const userElement = document.createElement("div");
             userElement.classList.add("user-box");
             userElement.dataset.userId = user.user_id;
@@ -174,33 +186,33 @@ const handleUserStatus = (users) => {
 };
 
 export const requestUserStatus = () => {
-    sendMessage({ type: 'request_user_status' });
+    sendMessage({ type: "request_user_status" });
 };
 
 export const sendPost = (post) => {
-    sendMessage({ type: 'post', data: post });
+    sendMessage({ type: "post", data: post });
 };
 
 export const sendComment = (comment) => {
-    sendMessage({ type: 'comment', data: comment });
+    sendMessage({ type: "comment", data: comment });
 };
 
 export const sendPrivateMessage = async (receiverID, content) => {
-    const username = localStorage.getItem('user_name');
+    const username = localStorage.getItem("user_name");
 
     if (!username) {
-        console.error('User name not found in localStorage');
+        console.error("User name not found in localStorage");
         return;
     }
 
     const message = {
-        type: 'private_message',
+        type: "private_message",
         data: {
             receiver_id: receiverID,
             content: content,
             sender_name: username,
-            timestamp: new Date().toISOString()
-        }
+            timestamp: new Date().toISOString(),
+        },
     };
 
     sendMessage(message);
@@ -208,11 +220,13 @@ export const sendPrivateMessage = async (receiverID, content) => {
 };
 
 export const initializeWebSocket = (token = null) => {
-    sessionToken = token || localStorage.getItem('session_token');
+    sessionToken = token || localStorage.getItem("session_token");
 
     if (sessionToken) {
         connectWebSocket();
     } else {
-        console.error("No session token available to initialize WebSocket connection");
+        console.error(
+            "No session token available to initialize WebSocket connection"
+        );
     }
 };

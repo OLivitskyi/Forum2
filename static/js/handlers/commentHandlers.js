@@ -21,14 +21,14 @@ async function handleCreateCommentSubmit(e, postId, clearError, showError) {
         showError("Content is required");
         return;
     }
-    
+
     console.log("Submitting comment with post ID:", postId, "and content:", content);
-    
+
     const body = {
         post_id: postId,
         content
     };
-    
+
     try {
         const response = await createComment(body);
         if (response) {
@@ -39,7 +39,7 @@ async function handleCreateCommentSubmit(e, postId, clearError, showError) {
 
             document.getElementById("content").value = "";
 
-            sendComment(response); 
+            sendComment(response);
         }
     } catch (error) {
         console.error("An error occurred while creating comment:", error);
@@ -56,7 +56,7 @@ export const loadAndRenderComments = async (postId) => {
         }
 
         const comments = await getComments(postId);
-        
+
         if (!Array.isArray(comments)) {
             console.error("Expected comments to be an array, got:", comments);
             return;

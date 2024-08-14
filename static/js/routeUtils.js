@@ -23,7 +23,7 @@ export const navigateToPostDetails = postId => {
 
 export function debounce(func, delay) {
     let timeoutId;
-    return function(...args) {
+    return function (...args) {
         if (timeoutId) {
             clearTimeout(timeoutId);
         }

@@ -1,8 +1,13 @@
 import AbstractView from "./AbstractView.js";
 import { getLayoutHtml } from "./layout.js";
 import { requestUserStatus } from "../websocket.js";
-import { setupMessageForm, loadMessages, setupMessageListScroll, setCurrentReceiver } from "../handlers/messageHandlers.js";
-import { getUserInfo } from "../api.js"; 
+import {
+    setupMessageForm,
+    loadMessages,
+    setupMessageListScroll,
+    setCurrentReceiver,
+} from "../handlers/messageHandlers.js";
+import { getUserInfo } from "../api.js";
 
 export default class extends AbstractView {
     constructor(params) {
@@ -46,7 +51,7 @@ export default class extends AbstractView {
             const target = event.target.closest(".user-box");
             if (target) {
                 const receiverID = target.dataset.userId;
-                
+
                 if (receiverID === currentUserId) {
                     alert("You cannot send messages to yourself.");
                     return;

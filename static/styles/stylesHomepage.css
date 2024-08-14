@@ -1,5 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
 @import url("https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700&display=swap");
+
 :root {
     --color-primary: #7380ec;
     --color-danger: #ff7782;
@@ -21,7 +22,8 @@
     --padding-1: 1.2rem;
     --box-shadow: 0 2rem 3rem var(--color-light);
 }
-*{
+
+* {
     margin: 0;
     padding: 0;
     outline: 0;
@@ -30,10 +32,12 @@
     text-decoration: none;
     box-sizing: border-box;
 }
-html{
+
+html {
     font-size: 14px;
 }
-body{
+
+body {
     width: 100vw;
     height: 100vh;
     font-family: poppins, sans-serif;
@@ -42,21 +46,25 @@ body{
     user-select: none;
     overflow-x: hidden;
 }
-.container{
+
+.container {
     display: flex;
     width: calc(100% - 14rem);
     margin: 0 auto;
     gap: 1.8rem;
     /* grid-template-columns: 14rem auto 23rem; */
 }
-a{
-    color:var(--color-dark)
+
+a {
+    color: var(--color-dark)
 }
+
 .forum-logo {
     display: block;
     width: 100%;
 }
-h1{
+
+h1 {
     font-family: verdana, sans-serif;
     color: #120075;
     background-color: white;
@@ -67,43 +75,56 @@ h1{
     font-weight: 900;
     font-size: 1.8rem;
 }
-h2{
+
+h2 {
     font-size: 2rem;
 }
-h3{
+
+h3 {
     font-size: 0.87rem;
 }
-h4{
+
+h4 {
     font-size: 0.8rem;
 }
-h5{
+
+h5 {
     font-size: 0.77rem;
 }
-small{
+
+small {
     font-size: 0.75rem;
 }
+
 .text-muted {
     color: var(--color-info-dark)
 }
-p{
-    color:var(--color-dark-variant)
+
+p {
+    color: var(--color-dark-variant)
 }
-b{
+
+b {
     color: var(--color-dark);
 }
-.primary{
+
+.primary {
     color: var(--color-primary)
 }
-.danger{
+
+.danger {
     color: var(--color-danger)
 }
-.success{
+
+.success {
     color: var(--color-success)
 }
-.warning{
+
+.warning {
     color: var(--color-warning)
 }
-aside{
+
+aside {
     height: 100vh;
     position: fixed;
     top: 0;
@@ -115,7 +136,8 @@ aside{
     flex-direction: column;
     border-radius: 0 10px 10px 0;
 }
-aside .top{
+
+aside .top {
     background: white;
     display: flex;
     justify-content: space-around;
@@ -124,18 +146,22 @@ aside .top{
     position: fixed;
     border-radius: 10px;
 }
+
 aside .logo {
     display: flex;
     gap: 0.5rem;
 }
+
 .logo-icon {
     margin-top: 10px;
 }
+
 aside .close {
     display: none;
 }
+
 /* ================ SIDEBAR ================ */
-aside .sidebar{
+aside .sidebar {
     background: white;
     border-radius: 1rem;
     display: flex;
@@ -145,10 +171,12 @@ aside .sidebar{
     top: 11rem;
     padding-right: 20px;
 }
-aside h3{
+
+aside h3 {
     font-weight: 500;
 }
-aside .sidebar a{
+
+aside .sidebar a {
     display: flex;
     color: var(--color-info-dark);
     margin-left: 2rem;
@@ -158,36 +186,44 @@ aside .sidebar a{
     height: 3.7rem;
     transition: all 300ms ease;
 }
-aside .sidebar a span{
+
+aside .sidebar a span {
     font-size: 1.6rem;
     transition: all 300ms ease;
 }
-aside .sidebar a:last-child{
+
+aside .sidebar a:last-child {
     position: absolute;
     bottom: 2rem;
     width: 100%;
 }
-aside .sidebar a.active{
+
+aside .sidebar a.active {
     background: var(--color-light);
     color: var(--color-primary);
     margin-left: 0;
 }
-aside .sidebar a.active:before{
+
+aside .sidebar a.active:before {
     content: '';
     width: 6px;
     height: 100%;
     background: var(--color-primary);
 }
-aside .sidebar a.active span{
+
+aside .sidebar a.active span {
     color: var(--color-primary);
     margin-left: calc(1rem - 6px);
 }
-aside .sidebar a:hover{
+
+aside .sidebar a:hover {
     color: var(--color-primary);
 }
-aside .sidebar a:hover span{
+
+aside .sidebar a:hover span {
     margin-left: 1rem;
 }
+
 aside .sidebar .message-count {
     background-color: var(--color-danger);
     color: var(--color-white);
@@ -195,6 +231,7 @@ aside .sidebar .message-count {
     font-size: 11px;
     border-radius: var(--border-radius-1);
 }
+
 /* ================ END OF SIDEBAR ================ */
 /* ================ CREATE POST CONTAINER ================ */
 .create-post-container {
@@ -208,11 +245,13 @@ aside .sidebar .message-count {
     border-radius: 10px;
     max-width: 90%;
 }
+
 .container-post {
     background-color: #7380EC;
     width: 600px;
     flex-direction: column;
 }
+
 .post-title {
     font-size: 24px;
     width: 600px;
@@ -220,9 +259,11 @@ aside .sidebar .message-count {
     font-weight: bold;
     text-align: center;
 }
+
 ::placeholder {
     color: #0D043E;
 }
+
 .post-subject {
     font-size: 22px;
     border: 2px solid black;
@@ -230,6 +271,7 @@ aside .sidebar .message-count {
     height: 100px;
     text-align: center;
 }
+
 #single-post-container {
     background-color: #ffffff;
     padding: 2rem;
@@ -238,7 +280,8 @@ aside .sidebar .message-count {
     box-shadow: var(--box-shadow);
     max-width: 800px;
 }
-.post-container{
+
+.post-container {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -248,6 +291,7 @@ aside .sidebar .message-count {
     padding: 20px;
     width: 600px;
 }
+
 .post-container-title {
     font-size: 2rem;
     font-weight: 700;
@@ -255,17 +299,20 @@ aside .sidebar .message-count {
     text-align: center;
     margin-bottom: 1.5rem;
 }
+
 .post-container-content {
     font-size: 1.1rem;
     line-height: 1.6;
     color: var(--color-dark-variant);
     margin-bottom: 2rem;
 }
+
 .post-container-reactions {
     display: flex;
     justify-content: center;
     gap: 1.5rem;
 }
+
 .post-container-reactions span {
     font-size: 1rem;
     color: var(--color-info-dark);
@@ -273,6 +320,7 @@ aside .sidebar .message-count {
     padding: 0.5rem 1rem;
     border-radius: var(--border-radius-1);
 }
+
 #comments-container {
     background-color: #f9f9f9;
     padding: 1.5rem;
@@ -280,6 +328,7 @@ aside .sidebar .message-count {
     box-shadow: var(--box-shadow);
     margin-top: 2rem;
 }
+
 .comment {
     background-color: #ffffff;
     padding: 1rem;
@@ -287,25 +336,30 @@ aside .sidebar .message-count {
     box-shadow: 0 1rem 2rem rgba(0, 0, 0, 0.05);
     margin-bottom: 1rem;
 }
+
 .comment h4 {
     font-size: 1.2rem;
     color: var(--color-dark);
     margin-bottom: 0.5rem;
 }
+
 .comment p {
     font-size: 1rem;
     color: var(--color-dark-variant);
 }
+
 .comment div {
     display: flex;
     justify-content: flex-start;
     gap: 1rem;
     margin-top: 0.5rem;
 }
+
 .comment div span {
     font-size: 0.9rem;
     color: var(--color-info-dark);
 }
+
 #content {
     width: 100%;
     padding: 0.8rem;
@@ -316,6 +370,7 @@ aside .sidebar .message-count {
     color: var(--color-dark);
     background-color: #f7f7f7;
 }
+
 button[type="submit"] {
     background-color: var(--color-primary);
     color: var(--color-white);
@@ -327,22 +382,28 @@ button[type="submit"] {
     font-weight: 600;
     transition: background-color 0.3s ease;
 }
+
 button[type="submit"]:hover {
     background-color: #5661d1;
 }
+
 .form__message {
     margin-top: 0.5rem;
     font-size: 0.9rem;
 }
+
 .form__message.success {
     color: var(--color-success);
 }
+
 .form__message.error {
     color: var(--color-danger);
 }
+
 ::placeholder {
     font-weight: 400;
 }
+
 .pill {
     font-size: 14px;
     font-family: 'Readex Pro', sans-serif;
@@ -354,19 +415,23 @@ button[type="submit"]:hover {
     background: #DDDDDD;
     cursor: pointer;
 }
+
 .pill-submit {
     width: 100px;
     height: 30px;
     font-weight: 600;
     background-color: var(--color-danger);
 }
+
 .pill:not(.pill--selected):hover {
     background: #CCCCCC;
 }
+
 .pill--selected {
     background: #120075;
     color: #FFFFFF;
 }
+
 /* ================ MESSAGES ================ */
 .message-container {
     width: 800px;
@@ -377,11 +442,13 @@ button[type="submit"]:hover {
     margin-top: 100px;
     border-radius: 10px;
 }
+
 .box {
     height: 600px;
     font-size: 2.6em;
     border-radius: 10px;
 }
+
 /* ================ LEFT SIDE OF MESSAGE BOX (user list) ================ */
 #box1 {
     width: 300px;
@@ -390,6 +457,7 @@ button[type="submit"]:hover {
     text-align: center;
     flex-direction: column;
 }
+
 .user-box {
     background-color: rgba(128, 0, 128, 0.329);
     flex: 1;
@@ -398,31 +466,35 @@ button[type="submit"]:hover {
     justify-content: center;
     border-bottom: 1px solid #323D2F;
 }
+
 .logged-in {
     color: rgb(136, 240, 136);
     margin-right: 20px;
 }
+
 .logged-out {
     color: red;
     margin-right: 20px;
 }
+
 /* ================ RIGHT SIDE OF MESSAGE BOX (send and view messages) ================ */
 #box2 {
     width: 500px;
-    background-color: #FFBB55;
+    background-color: var(--color-warning);
     border: 1px solid #62616C;
     display: flex;
     flex-direction: column;
-    height: 100%; /* Займає всю доступну висоту */
+    height: 100%;
 }
 
 .message-list {
-    flex: 1; /* message list take up all available space */
-    overflow-y: auto; /* scrollbar if messages exceed height */
+    flex: 1;
+    overflow-y: auto;
     padding: 10px;
     display: flex;
-    flex-direction: column-reverse; /* Нові повідомлення з'являються знизу */
-    height: 300px; /* обмеження висоти для скролінгу */
+    flex-direction: column-reverse;
+    height: 300px;
+    scroll-behavior: smooth;
 }
 
 .chatbox {
@@ -434,16 +506,17 @@ button[type="submit"]:hover {
 #message-input {
     flex: 1;
     border: 1px solid rgb(126, 255, 114);
-    padding: 5px; /* додаткове відступ для зручності */
+    padding: 5px;
 }
 
 #send-button {
     padding: 5px 30px;
-    border-radius: 5px;
+    border-radius: var(--border-radius-1);
     background-color: var(--color-danger);
     border: none;
     cursor: pointer;
     font-weight: 800;
+    transition: background-color 0.3s ease;
 }
 
 #send-button:hover {
@@ -466,8 +539,9 @@ button[type="submit"]:hover {
 .message-content {
     max-width: 80%;
     padding: 10px;
-    border-radius: 10px;
-    word-wrap: break-word; /* Переносити слова на новий рядок при необхідності */
+    border-radius: var(--border-radius-1);
+    word-wrap: break-word;
+    transition: background-color 0.3s ease;
 }
 
 .user-message .message-content {
@@ -478,6 +552,13 @@ button[type="submit"]:hover {
     background-color: #F2F2F2;
 }
 
+.user-message.new .message-content {
+    background-color: #4fc3f7;
+}
+
+.other-user-message.new .message-content {
+    background-color: #ffcc80;
+}
 
 #popup-notification {
     position: fixed;
