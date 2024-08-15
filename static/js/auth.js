@@ -22,6 +22,7 @@ export const logout = async () => {
         localStorage.removeItem('session_token');
         localStorage.removeItem('user_id');
         localStorage.removeItem('user_name');
+        localStorage.removeItem("users");
         navigateTo("/");
     } else {
         console.error("Logout failed");

@@ -146,6 +146,7 @@ export const handlePrivateMessage = (message) => {
     });
   }
 
+  
   localStorage.setItem("users", JSON.stringify(users));
 
   requestUserStatus();
