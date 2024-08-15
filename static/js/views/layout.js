@@ -1,3 +1,4 @@
+// static/js/views/layout.js
 import { renderUserList } from "../components/userList.js";
 import { requestUserStatus } from "../handlers/userStatusHandlers.js";
 import { getUserInfo } from "../api.js";

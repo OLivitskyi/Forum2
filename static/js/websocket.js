@@ -1,6 +1,8 @@
 import { navigateToPostDetails } from "./routeUtils.js";
 import { handlePrivateMessage } from "./handlers/messageHandlers.js";
 import { handleUserStatus, requestUserStatus } from "./handlers/userStatusHandlers.js";
+import { getUserInfo } from "./api.js"; 
+import { renderUserList } from "./components/userList.js"; 
 
 let socket;
 let isConnected = false;
