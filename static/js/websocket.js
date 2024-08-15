@@ -1,5 +1,6 @@
 import { navigateToPostDetails } from "./routeUtils.js";
 import { handlePrivateMessage } from "./handlers/messageHandlers.js";
+import { handleUserStatus, requestUserStatus } from "./handlers/userStatusHandlers.js";
 
 let socket;
 let isConnected = false;
@@ -74,7 +75,6 @@ const connectWebSocket = () => {
         );
 
         if (event.code === 1000) {
-            // Normal closure
             console.log("Connection closed normally.");
             return;
         }
@@ -96,8 +96,14 @@ const connectWebSocket = () => {
         console.error("WebSocket error:", error);
     };
 };
+export const sendPost = (post) => {
+    sendMessage({ type: "post", data: post });
+};
 
-const sendMessage = (message) => {
+export const sendComment = (comment) => {
+    sendMessage({ type: "comment", data: comment });
+};
+export const sendMessage = (message) => {
     if (isConnected && socket && socket.readyState === WebSocket.OPEN) {
         socket.send(JSON.stringify(message));
     } else {
@@ -153,70 +159,6 @@ const handleComment = (comment) => {
         `;
         commentsContainer.appendChild(commentElement);
     }
-};
-
-const handleUserStatus = (users) => {
-    const userContainer = document.getElementById("box1");
-    if (!userContainer) return;
-
-    const currentUserId = localStorage.getItem("user_id");
-
-    userContainer.innerHTML = "";
-
-    users.sort((a, b) => {
-        const aLastMessageTime = new Date(a.last_message_time || 0);
-        const bLastMessageTime = new Date(b.last_message_time || 0);
-
-        if (aLastMessageTime > bLastMessageTime) return -1;
-        if (aLastMessageTime < bLastMessageTime) return 1;
-
-        return a.username.localeCompare(b.username);
-    });
-
-    users
-        .filter((user) => user.user_id !== currentUserId)
-        .forEach((user) => {
-            const userElement = document.createElement("div");
-            userElement.classList.add("user-box");
-            userElement.dataset.userId = user.user_id;
-            const statusClass = user.is_online ? "logged-in" : "logged-out";
-            userElement.innerHTML = `<span class="${statusClass}">●</span>${user.username}`;
-            userContainer.appendChild(userElement);
-        });
-};
-
-export const requestUserStatus = () => {
-    sendMessage({ type: "request_user_status" });
-};
-
-export const sendPost = (post) => {
-    sendMessage({ type: "post", data: post });
-};
-
-export const sendComment = (comment) => {
-    sendMessage({ type: "comment", data: comment });
-};
-
-export const sendPrivateMessage = async (receiverID, content) => {
-    const username = localStorage.getItem("user_name");
-
-    if (!username) {
-        console.error("User name not found in localStorage");
-        return;
-    }
-
-    const message = {
-        type: "private_message",
-        data: {
-            receiver_id: receiverID,
-            content: content,
-            sender_name: username,
-            timestamp: new Date().toISOString(),
-        },
-    };
-
-    sendMessage(message);
-    handlePrivateMessage(message.data);
 };
 
 export const initializeWebSocket = (token = null) => {

@@ -1,6 +1,6 @@
 import AbstractView from "./AbstractView.js";
 import { getLayoutHtml } from "./layout.js";
-import { requestUserStatus } from "../websocket.js";
+import { requestUserStatus } from "../handlers/userStatusHandlers.js";
 import {
     setupMessageForm,
     loadMessages,

@@ -1,4 +1,5 @@
-import { sendPrivateMessage } from "../websocket.js";
+import { sendMessage } from "../websocket.js";
+import { requestUserStatus } from "./userStatusHandlers.js";
 import { debounce } from "../routeUtils.js";
 
 let currentReceiverID = null;
@@ -44,11 +45,8 @@ export const loadMessages = async (receiverID, loadMore = false) => {
         );
         messageElement.innerHTML = `
           <div class="message-content">
-            <strong>${msg.sender_name || "Unknown User"}:</strong> ${msg.content
-          }
-            <div class="message-time">${new Date(
-            msg.created_at
-          ).toLocaleString()}</div>
+            <strong>${msg.sender_name || "Unknown User"}:</strong> ${msg.content}
+            <div class="message-time">${new Date(msg.created_at).toLocaleString()}</div>
           </div>
         `;
         messageList.prepend(messageElement);
@@ -100,44 +98,88 @@ export const setCurrentReceiver = (receiverID) => {
 export const handlePrivateMessage = (message) => {
   const messageList = document.querySelector(".message-list");
   const messagesLink = document.getElementById("messages");
+  const messageCountElement = messagesLink.querySelector(".message-count");
+
+  const users = JSON.parse(localStorage.getItem("users")) || [];
+  let user = users.find(user => user.user_id === message.sender_id);
+
+  if (!user) {
+      user = users.find(user => user.user_id === message.receiver_id);
+  }
+
+  if (user) {
+      user.last_message_time = message.timestamp;
+  } else {
+      users.push({
+          user_id: message.sender_id,
+          username: message.sender_name,
+          last_message_time: message.timestamp,
+          is_online: true
+      });
+  }
+
+  localStorage.setItem("users", JSON.stringify(users));
+
+  requestUserStatus();
 
   if (messageList) {
-    const isAtBottom =
-      messageList.scrollTop + messageList.clientHeight >=
-      messageList.scrollHeight;
+      const isAtBottom = messageList.scrollTop + messageList.clientHeight >= messageList.scrollHeight;
 
-    const messageElement = document.createElement("div");
-    messageElement.classList.add(
-      message.sender_id === currentReceiverID
-        ? "other-user-message"
-        : "user-message",
-      "new"
-    );
-    messageElement.innerHTML = `
-      <div class="message-content">
-        <strong>${message.sender_name}:</strong> ${message.content}
-        <div class="message-time">${new Date(
-      message.timestamp
-    ).toLocaleString()}</div>
-      </div>
-    `;
+      const messageElement = document.createElement("div");
+      messageElement.classList.add(
+          message.sender_id === currentReceiverID
+              ? "other-user-message"
+              : "user-message",
+          "new"
+      );
+      messageElement.innerHTML = `
+          <div class="message-content">
+              <strong>${message.sender_name}:</strong> ${message.content}
+              <div class="message-time">${new Date(message.timestamp).toLocaleString()}</div>
+          </div>
+      `;
 
-    messageList.prepend(messageElement);
+      messageList.prepend(messageElement);
 
-    if (isAtBottom) {
-      messageList.scrollTop = messageList.scrollHeight;
-    }
+      if (isAtBottom) {
+          messageList.scrollTop = messageList.scrollHeight;
+      }
 
-    setTimeout(() => {
-      messageElement.classList.remove("new");
-    }, 3000);
+      setTimeout(() => {
+          messageElement.classList.remove("new");
+      }, 3000);
   } else {
-    showPopupNotification("You have a new message!");
+      showPopupNotification("You have a new message!");
 
-    const messageCountElement = messagesLink.querySelector(".message-count");
-    const currentCount = parseInt(messageCountElement.textContent, 10) || 0;
-    messageCountElement.textContent = currentCount + 1;
+      const currentCount = parseInt(messageCountElement.textContent, 10) || 0;
+      messageCountElement.textContent = currentCount + 1;
   }
+};
+
+
+export const sendPrivateMessage = async (receiverID, content) => {
+  const username = localStorage.getItem("user_name");
+
+  if (!username) {
+    console.error("User name not found in localStorage");
+    return;
+  }
+
+  const message = {
+    type: "private_message",
+    data: {
+      receiver_id: receiverID,
+      content: content,
+      sender_name: username,
+      timestamp: new Date().toISOString(),
+    },
+  };
+
+  console.log("Sending private message:", message);
+
+  sendMessage(message);
+  handlePrivateMessage(message.data);
+  requestUserStatus();
 };
 
 const showPopupNotification = (message) => {
@@ -155,15 +197,14 @@ const showPopupNotification = (message) => {
 export const markMessagesAsRead = (receiverID) => {
   const messagesLink = document.getElementById("messages");
   const messageCountElement = messagesLink.querySelector(".message-count");
-  const currentCount = parseInt(messageCountElement.textContent, 10) || 0;
 
   if (receiverID === currentReceiverID) {
-    const unreadMessages = document.querySelectorAll(
-      ".other-user-message.unread"
-    );
-    const unreadCount = unreadMessages.length;
-    unreadMessages.forEach((msg) => msg.classList.remove("unread"));
+      const unreadMessages = document.querySelectorAll(".other-user-message.new");
+      const unreadCount = unreadMessages.length;
 
-    messageCountElement.textContent = Math.max(currentCount - unreadCount, 0);
+      unreadMessages.forEach((msg) => msg.classList.remove("new"));
+
+      const currentCount = parseInt(messageCountElement.textContent, 10) || 0;
+      messageCountElement.textContent = Math.max(currentCount - unreadCount, 0);
   }
 };
