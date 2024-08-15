@@ -5,6 +5,8 @@ export const renderUserList = (userContainerId, users, currentUserId, onUserClic
     // Очищуємо контейнер перед додаванням нових користувачів
     userContainer.innerHTML = "";
 
+    const addedUserIds = new Set();
+
     // Сортування і рендеринг списку користувачів
     users.sort((a, b) => {
         const aLastMessageTime = new Date(a.last_message_time || 0);
@@ -19,13 +21,17 @@ export const renderUserList = (userContainerId, users, currentUserId, onUserClic
     users
         .filter(user => user.user_id !== currentUserId)
         .forEach(user => {
-            const userElement = document.createElement("div");
-            userElement.classList.add("user-box");
-            userElement.dataset.userId = user.user_id;
+            if (!addedUserIds.has(user.user_id)) {
+                const userElement = document.createElement("div");
+                userElement.classList.add("user-box");
+                userElement.dataset.userId = user.user_id;
 
-            const statusClass = user.is_online ? "logged-in" : "logged-out";
-            userElement.innerHTML = `<span class="${statusClass}">●</span>${user.username}`;
-            userElement.addEventListener("click", () => onUserClick(user.user_id));
-            userContainer.appendChild(userElement);
+                const statusClass = user.is_online ? "logged-in" : "logged-out";
+                userElement.innerHTML = `<span class="${statusClass}">●</span>${user.username}`;
+                userElement.addEventListener("click", () => onUserClick(user.user_id));
+                userContainer.appendChild(userElement);
+
+                addedUserIds.add(user.user_id);
+            }
         });
 };
