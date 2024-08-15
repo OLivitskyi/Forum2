@@ -38,6 +38,9 @@ export const getLayoutHtml = (content) => {
             <main>
                 ${content}
             </main>
+            <div class="user-status-container">
+                <div id="user-status-list" class="user-status-list"></div>
+            </div>
         </div>
         <div id="popup-notification">You have a new message!</div>
     `;

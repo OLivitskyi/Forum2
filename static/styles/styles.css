@@ -197,3 +197,40 @@ body {
     font-size: 0.9rem;
     color: #555;
 }
+
+.user-status-container {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    width: 200px;
+    background-color: #ffffff;
+    border-radius: 0.5rem;
+    box-shadow: 0 2rem 3rem var(--color-light);
+    padding: 1rem;
+    z-index: 1000;
+}
+
+.user-status-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.user-box {
+    padding: 0.5rem;
+    border-radius: var(--border-radius-1);
+    transition: background-color 0.3s ease;
+    cursor: pointer;
+}
+
+.user-box:hover {
+    background-color: var(--color-light);
+}
+
+.logged-in {
+    color: green;
+}
+
+.logged-out {
+    color: red;
+}
