@@ -1,11 +1,9 @@
-// static/js/views/layout.js
 import { renderUserList } from "../components/userList.js";
 import { requestUserStatus } from "../handlers/userStatusHandlers.js";
 import { getUserInfo } from "../api.js";
 
 export const getLayoutHtml = (content) => {
-    // Створення HTML структури
-    const layout = `
+  const layout = `
         <div class="container">
             <aside>
                 <div class="top">
@@ -51,20 +49,35 @@ export const getLayoutHtml = (content) => {
         <div id="popup-notification">You have a new message!</div>
     `;
 
-    // Ініціалізація після рендеру
-    setTimeout(async () => {
-        const currentUserInfo = await getUserInfo();
-        const currentUserId = currentUserInfo.user_id;
-        
-        // Запитуємо статус користувачів після підключення
-        requestUserStatus();
+  setTimeout(async () => {
+    try {
+      const currentUserInfo = await getUserInfo();
+      if (!currentUserInfo || !currentUserInfo.user_id) {
+        console.error("Failed to retrieve user info");
+        return;
+      }
 
-        // Відображаємо список користувачів
-        renderUserList("user-status-list", JSON.parse(localStorage.getItem("users")) || [], currentUserId, (userId) => {
-            console.log(`User ${userId} clicked in global user list.`);
-        });
+      const currentUserId = currentUserInfo.user_id;
+      requestUserStatus();
 
-    }, 0);
+      const users = JSON.parse(localStorage.getItem("users")) || [];
+      if (!users.length) {
+        console.warn("No users found in localStorage");
+      }
 
-    return layout;
+      const userStatusListElement = document.getElementById("user-status-list");
+      if (!userStatusListElement) {
+        console.error("User status list element not found");
+        return;
+      }
+
+      renderUserList("user-status-list", users, currentUserId, (userId) => {
+        console.log(`User ${userId} clicked in global user list.`);
+      });
+    } catch (error) {
+      console.error("An error occurred while setting up the user list:", error);
+    }
+  }, 0);
+
+  return layout;
 };

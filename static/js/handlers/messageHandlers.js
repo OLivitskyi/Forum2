@@ -1,6 +1,7 @@
 import { sendMessage } from "../websocket.js";
 import { requestUserStatus } from "./userStatusHandlers.js";
 import { debounce } from "../routeUtils.js";
+import { navigateTo } from "../routeUtils.js";
 
 let currentReceiverID = null;
 let offset = 0;
@@ -31,6 +32,11 @@ export const loadMessages = async (receiverID, loadMore = false) => {
 
     const messageList = document.querySelector(".message-list");
 
+    if (!messageList) {
+      console.error("Element .message-list not found.");
+      return;
+    }
+
     if (!loadMore) {
       messageList.innerHTML = "";
     }
@@ -44,11 +50,15 @@ export const loadMessages = async (receiverID, loadMore = false) => {
           msg.sender_id === receiverID ? "other-user-message" : "user-message"
         );
         messageElement.innerHTML = `
-          <div class="message-content">
-            <strong>${msg.sender_name || "Unknown User"}:</strong> ${msg.content}
-            <div class="message-time">${new Date(msg.created_at).toLocaleString()}</div>
-          </div>
-        `;
+                  <div class="message-content">
+                      <strong>${msg.sender_name || "Unknown User"}:</strong> ${
+          msg.content
+        }
+                      <div class="message-time">${new Date(
+                        msg.created_at
+                      ).toLocaleString()}</div>
+                  </div>
+              `;
         messageList.prepend(messageElement);
       });
 
@@ -92,7 +102,25 @@ export const setupMessageListScroll = () => {
 export const setCurrentReceiver = (receiverID) => {
   currentReceiverID = receiverID;
   offset = 0;
-  loadMessages(receiverID);
+
+  if (window.location.pathname === "/messages") {
+    const messageList = document.querySelector(".message-list");
+
+    if (messageList) {
+      loadMessages(receiverID);
+    } else {
+      console.error(
+        "Element .message-list not found. Ensure you are on the messages page."
+      );
+    }
+  } else {
+    console.log("User is not on the messages page. Redirecting...");
+    navigateTo("/messages");
+
+    setTimeout(() => {
+      setCurrentReceiver(receiverID);
+    }, 100);
+  }
 };
 
 export const handlePrivateMessage = (message) => {
@@ -101,21 +129,21 @@ export const handlePrivateMessage = (message) => {
   const messageCountElement = messagesLink.querySelector(".message-count");
 
   const users = JSON.parse(localStorage.getItem("users")) || [];
-  let user = users.find(user => user.user_id === message.sender_id);
+  let user = users.find((user) => user.user_id === message.sender_id);
 
   if (!user) {
-      user = users.find(user => user.user_id === message.receiver_id);
+    user = users.find((user) => user.user_id === message.receiver_id);
   }
 
   if (user) {
-      user.last_message_time = message.timestamp;
+    user.last_message_time = message.timestamp;
   } else {
-      users.push({
-          user_id: message.sender_id,
-          username: message.sender_name,
-          last_message_time: message.timestamp,
-          is_online: true
-      });
+    users.push({
+      user_id: message.sender_id,
+      username: message.sender_name,
+      last_message_time: message.timestamp,
+      is_online: true,
+    });
   }
 
   localStorage.setItem("users", JSON.stringify(users));
@@ -123,39 +151,42 @@ export const handlePrivateMessage = (message) => {
   requestUserStatus();
 
   if (messageList) {
-      const isAtBottom = messageList.scrollTop + messageList.clientHeight >= messageList.scrollHeight;
+    const isAtBottom =
+      messageList.scrollTop + messageList.clientHeight >=
+      messageList.scrollHeight;
 
-      const messageElement = document.createElement("div");
-      messageElement.classList.add(
-          message.sender_id === currentReceiverID
-              ? "other-user-message"
-              : "user-message",
-          "new"
-      );
-      messageElement.innerHTML = `
+    const messageElement = document.createElement("div");
+    messageElement.classList.add(
+      message.sender_id === currentReceiverID
+        ? "other-user-message"
+        : "user-message",
+      "new"
+    );
+    messageElement.innerHTML = `
           <div class="message-content">
               <strong>${message.sender_name}:</strong> ${message.content}
-              <div class="message-time">${new Date(message.timestamp).toLocaleString()}</div>
+              <div class="message-time">${new Date(
+                message.timestamp
+              ).toLocaleString()}</div>
           </div>
       `;
 
-      messageList.prepend(messageElement);
+    messageList.prepend(messageElement);
 
-      if (isAtBottom) {
-          messageList.scrollTop = messageList.scrollHeight;
-      }
+    if (isAtBottom) {
+      messageList.scrollTop = messageList.scrollHeight;
+    }
 
-      setTimeout(() => {
-          messageElement.classList.remove("new");
-      }, 3000);
+    setTimeout(() => {
+      messageElement.classList.remove("new");
+    }, 3000);
   } else {
-      showPopupNotification("You have a new message!");
+    showPopupNotification("You have a new message!");
 
-      const currentCount = parseInt(messageCountElement.textContent, 10) || 0;
-      messageCountElement.textContent = currentCount + 1;
+    const currentCount = parseInt(messageCountElement.textContent, 10) || 0;
+    messageCountElement.textContent = currentCount + 1;
   }
 };
-
 
 export const sendPrivateMessage = async (receiverID, content) => {
   const username = localStorage.getItem("user_name");
@@ -199,12 +230,12 @@ export const markMessagesAsRead = (receiverID) => {
   const messageCountElement = messagesLink.querySelector(".message-count");
 
   if (receiverID === currentReceiverID) {
-      const unreadMessages = document.querySelectorAll(".other-user-message.new");
-      const unreadCount = unreadMessages.length;
+    const unreadMessages = document.querySelectorAll(".other-user-message.new");
+    const unreadCount = unreadMessages.length;
 
-      unreadMessages.forEach((msg) => msg.classList.remove("new"));
+    unreadMessages.forEach((msg) => msg.classList.remove("new"));
 
-      const currentCount = parseInt(messageCountElement.textContent, 10) || 0;
-      messageCountElement.textContent = Math.max(currentCount - unreadCount, 0);
+    const currentCount = parseInt(messageCountElement.textContent, 10) || 0;
+    messageCountElement.textContent = Math.max(currentCount - unreadCount, 0);
   }
 };
