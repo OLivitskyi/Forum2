@@ -1,5 +1,10 @@
+import { renderUserList } from "../components/userList.js";
+import { requestUserStatus } from "../handlers/userStatusHandlers.js";
+import { getUserInfo } from "../api.js";
+
 export const getLayoutHtml = (content) => {
-    return `
+    // Створення HTML структури
+    const layout = `
         <div class="container">
             <aside>
                 <div class="top">
@@ -44,4 +49,21 @@ export const getLayoutHtml = (content) => {
         </div>
         <div id="popup-notification">You have a new message!</div>
     `;
+
+    // Ініціалізація після рендеру
+    setTimeout(async () => {
+        const currentUserInfo = await getUserInfo();
+        const currentUserId = currentUserInfo.user_id;
+        
+        // Запитуємо статус користувачів після підключення
+        requestUserStatus();
+
+        // Відображаємо список користувачів
+        renderUserList("user-status-list", JSON.parse(localStorage.getItem("users")) || [], currentUserId, (userId) => {
+            console.log(`User ${userId} clicked in global user list.`);
+        });
+
+    }, 0);
+
+    return layout;
 };

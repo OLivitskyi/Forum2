@@ -37,7 +37,7 @@ const connectWebSocket = () => {
         requestUserStatus();
     };
 
-    socket.onmessage = (event) => {
+    socket.onmessage = async (event) => {
         const message = JSON.parse(event.data);
         console.log("Received message:", message);
 
@@ -63,6 +63,11 @@ const connectWebSocket = () => {
             default:
                 console.warn("Unknown message type:", message.type);
         }
+        const currentUserInfo = await getUserInfo();
+        const currentUserId = currentUserInfo.user_id;
+        renderUserList("user-status-list", JSON.parse(localStorage.getItem("users")) || [], currentUserId, (userId) => {
+            console.log(`User ${userId} clicked in global user list.`);
+        });
     };
 
     socket.onclose = (event) => {
