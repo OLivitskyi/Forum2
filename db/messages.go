@@ -28,17 +28,16 @@ func AddMessage(senderID, receiverID uuid.UUID, content string) error {
 	return nil
 }
 
-// GetMessages retrieves messages between two users with pagination support.
 func GetMessages(senderID, receiverID uuid.UUID, limit, offset int) ([]Message, error) {
 	if DB == nil {
 		return nil, fmt.Errorf("db connection failed")
 	}
 	rows, err := DB.Query(`
-		SELECT m.message_id, m.sender_id, m.receiver_id, m.content, m.created_at, m.is_read, u.username 
-		FROM messages m 
-		JOIN users u ON m.sender_id = u.user_id 
-		WHERE (m.sender_id = ? AND m.receiver_id = ?) OR (m.sender_id = ? AND m.receiver_id = ?) 
-		ORDER BY m.created_at DESC LIMIT ? OFFSET ?`,
+        SELECT m.message_id, m.sender_id, m.receiver_id, m.content, m.created_at, m.is_read, u.username 
+        FROM messages m 
+        JOIN users u ON m.sender_id = u.user_id 
+        WHERE (m.sender_id = ? AND m.receiver_id = ?) OR (m.sender_id = ? AND m.receiver_id = ?) 
+        ORDER BY m.created_at DESC LIMIT ? OFFSET ?`,
 		senderID, receiverID, receiverID, senderID, limit, offset)
 	if err != nil {
 		return nil, err

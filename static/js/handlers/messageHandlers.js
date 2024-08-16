@@ -20,7 +20,7 @@ export const setupMessageForm = () => {
   });
 };
 
-export const loadMessages = async (receiverID, loadMore = false) => {
+export const loadMessages = async (receiverID, loadMore = false, initialLoad = false) => {
   try {
     const limit = 10;
     offset = loadMore ? offset + limit : 0;
@@ -28,7 +28,7 @@ export const loadMessages = async (receiverID, loadMore = false) => {
     const response = await fetch(
       `/api/get-messages?user_id=${receiverID}&limit=${limit}&offset=${offset}`
     );
-    const messages = await response.json();
+    let messages = await response.json();
 
     const messageList = document.querySelector(".message-list");
 
@@ -42,8 +42,6 @@ export const loadMessages = async (receiverID, loadMore = false) => {
     }
 
     if (Array.isArray(messages) && messages.length > 0) {
-      messages.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
-
       messages.forEach((msg) => {
         const messageElement = document.createElement("div");
         messageElement.classList.add(
@@ -51,15 +49,17 @@ export const loadMessages = async (receiverID, loadMore = false) => {
         );
         messageElement.innerHTML = `
                   <div class="message-content">
-                      <strong>${msg.sender_name || "Unknown User"}:</strong> ${
-          msg.content
-        }
+                      <strong>${msg.sender_name || "Unknown User"}:</strong> ${msg.content}
                       <div class="message-time">${new Date(
-                        msg.created_at
-                      ).toLocaleString()}</div>
+          msg.created_at
+        ).toLocaleString()}</div>
                   </div>
               `;
-        messageList.prepend(messageElement);
+        if (loadMore) {
+          messageList.prepend(messageElement);
+        } else {
+          messageList.prepend(messageElement);
+        }
       });
 
       if (!loadMore && isAutoScrollEnabled) {
@@ -74,30 +74,6 @@ export const loadMessages = async (receiverID, loadMore = false) => {
   }
 };
 
-export const setupMessageListScroll = () => {
-  const messageList = document.querySelector(".message-list");
-
-  messageList.addEventListener(
-    "scroll",
-    debounce(() => {
-      if (messageList.scrollTop === 0 && !loading) {
-        const oldScrollHeight = messageList.scrollHeight;
-
-        loading = true;
-        loadMessages(currentReceiverID, true).finally(() => {
-          loading = false;
-
-          const newScrollHeight = messageList.scrollHeight;
-          messageList.scrollTop = newScrollHeight - oldScrollHeight;
-        });
-      }
-
-      isAutoScrollEnabled =
-        messageList.scrollTop + messageList.clientHeight >=
-        messageList.scrollHeight;
-    }, 200)
-  );
-};
 
 export const setCurrentReceiver = (receiverID) => {
   currentReceiverID = receiverID;
@@ -107,7 +83,7 @@ export const setCurrentReceiver = (receiverID) => {
     const messageList = document.querySelector(".message-list");
 
     if (messageList) {
-      loadMessages(receiverID);
+      loadMessages(receiverID, false, true);
     } else {
       console.error(
         "Element .message-list not found. Ensure you are on the messages page."
@@ -122,6 +98,31 @@ export const setCurrentReceiver = (receiverID) => {
     }, 100);
   }
 };
+
+export const setupMessageListScroll = () => {
+  const messageList = document.querySelector(".message-list");
+
+  messageList.addEventListener(
+    "scroll",
+    debounce(() => {
+      if (messageList.scrollTop === 0 && !loading) {
+        const oldScrollHeight = messageList.scrollHeight;
+
+        loading = true;
+        loadMessages(currentReceiverID, true).then(() => {
+          loading = false;
+          const newScrollHeight = messageList.scrollHeight;
+          messageList.scrollTop = newScrollHeight - oldScrollHeight;
+        });
+      }
+
+      isAutoScrollEnabled =
+        messageList.scrollTop + messageList.clientHeight >=
+        messageList.scrollHeight;
+    }, 200)
+  );
+};
+
 
 export const handlePrivateMessage = (message) => {
   const messageList = document.querySelector(".message-list");
@@ -146,7 +147,6 @@ export const handlePrivateMessage = (message) => {
     });
   }
 
-  
   localStorage.setItem("users", JSON.stringify(users));
 
   requestUserStatus();
@@ -167,12 +167,12 @@ export const handlePrivateMessage = (message) => {
           <div class="message-content">
               <strong>${message.sender_name}:</strong> ${message.content}
               <div class="message-time">${new Date(
-                message.timestamp
-              ).toLocaleString()}</div>
+      message.timestamp
+    ).toLocaleString()}</div>
           </div>
       `;
 
-    messageList.prepend(messageElement);
+    messageList.append(messageElement);
 
     if (isAtBottom) {
       messageList.scrollTop = messageList.scrollHeight;

@@ -492,7 +492,7 @@ button[type="submit"]:hover {
     overflow-y: auto;
     padding: 10px;
     display: flex;
-    flex-direction: column-reverse;
+    flex-direction: column;
     height: 300px;
     scroll-behavior: smooth;
 }
