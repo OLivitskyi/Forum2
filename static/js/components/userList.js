@@ -1,13 +1,15 @@
-export const renderUserList = (userContainerId, users, currentUserId, onUserClick) => {
+export const renderUserList = (
+    userContainerId,
+    users,
+    currentUserId,
+    onUserClick,
+    overrideStatusStyle = false
+) => {
     const userContainer = document.getElementById(userContainerId);
     if (!userContainer || !users.length) return;
-
-    // Очищуємо контейнер перед додаванням нових користувачів
     userContainer.innerHTML = "";
-
     const addedUserIds = new Set();
 
-    // Сортування і рендеринг списку користувачів
     users.sort((a, b) => {
         const aLastMessageTime = new Date(a.last_message_time || 0);
         const bLastMessageTime = new Date(b.last_message_time || 0);
@@ -19,14 +21,19 @@ export const renderUserList = (userContainerId, users, currentUserId, onUserClic
     });
 
     users
-        .filter(user => user.user_id !== currentUserId)
-        .forEach(user => {
+        .filter((user) => user.user_id !== currentUserId)
+        .forEach((user) => {
             if (!addedUserIds.has(user.user_id)) {
                 const userElement = document.createElement("div");
                 userElement.classList.add("user-box");
                 userElement.dataset.userId = user.user_id;
 
-                const statusClass = user.is_online ? "logged-in" : "logged-out";
+                let statusClass = user.is_online ? "logged-in" : "logged-out";
+
+                if (overrideStatusStyle) {
+                    statusClass = "custom-status";
+                }
+
                 userElement.innerHTML = `<span class="${statusClass}">●</span>${user.username}`;
                 userElement.addEventListener("click", () => onUserClick(user.user_id));
                 userContainer.appendChild(userElement);

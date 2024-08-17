@@ -234,3 +234,7 @@ body {
 .logged-out {
     color: red;
 }
+
+.custom-status {
+    color: purple;
+}
