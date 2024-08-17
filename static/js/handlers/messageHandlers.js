@@ -14,11 +14,18 @@ export const setupMessageForm = () => {
 
   sendButton.addEventListener("click", () => {
     if (currentReceiverID && messageInput.value) {
-      sendPrivateMessage(currentReceiverID, messageInput.value);
-      messageInput.value = "";
+      const users = JSON.parse(localStorage.getItem("users")) || [];
+      const user = users.find((u) => u.user_id === currentReceiverID);
+      if (user && user.is_online) {
+        sendPrivateMessage(currentReceiverID, messageInput.value);
+        messageInput.value = "";
+      } else {
+        showPopupNotification("The user you are trying to message is currently offline.");
+      }
     }
   });
 };
+
 
 export const loadMessages = async (receiverID, loadMore = false, initialLoad = false) => {
   try {
