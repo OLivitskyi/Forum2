@@ -22,6 +22,7 @@ export default class extends AbstractView {
             <select id="category-select" class="form__input">
               <option value="">Select a category</option>
             </select>
+            <div class="error" id="category-error" style="color: red; display: none;">Category is required.</div>
           </div>
           <button class="pill pill-submit" type="submit">POST</button>
         </div>
