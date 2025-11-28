@@ -18,7 +18,7 @@ func NewSession(w http.ResponseWriter, username string, userID uuid.UUID) (strin
 	}
 	token, err := uuid.NewV4()
 	if err != nil {
-		log.Fatalf("Failed to generate UUID: %v", err)
+		log.Printf("Failed to generate UUID: %v", err)
 		return "", err
 	}
 	session := db.Session{
@@ -34,11 +34,13 @@ func NewSession(w http.ResponseWriter, username string, userID uuid.UUID) (strin
 		Expires:  expiration,
 		Path:     "/",
 		HttpOnly: true,
+		SameSite: http.SameSiteStrictMode,
+		Secure:   false, // Set to true in production with HTTPS
 	}
 	http.SetCookie(w, &cookie)
 	err = db.SaveSession(token.String(), userID, expiration)
 	if err != nil {
-		log.Fatalf("Failed to save session to database: %v", err)
+		log.Printf("Failed to save session to database: %v", err)
 		return "", err
 	}
 	log.Printf("New session created for user %s with token %s", username, token.String())

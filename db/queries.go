@@ -13,6 +13,26 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+// allowedUserFields is a whitelist of allowed field names for user queries
+var allowedUserFields = map[string]bool{
+	"username": true,
+	"email":    true,
+}
+
+// getUserFieldName returns a safe field name for user queries
+func getUserFieldName(usernameOrEmail string) (string, error) {
+	var fieldname string
+	if strings.Contains(usernameOrEmail, "@") {
+		fieldname = "email"
+	} else {
+		fieldname = "username"
+	}
+	if !allowedUserFields[fieldname] {
+		return "", errors.New("invalid field name")
+	}
+	return fieldname, nil
+}
+
 const createtables string = `
 CREATE TABLE IF NOT EXISTS categories (
 	category_id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
@@ -127,13 +147,11 @@ func RegisterUser(data []interface{}) ([]User, error) {
 }
 func LoginUser(db *sql.DB, usernameOrEmail, password string) (Login, error) {
 	var login Login
-	var fieldname string
-	if strings.Contains(usernameOrEmail, "@") {
-		fieldname = "email"
-	} else {
-		fieldname = "username"
+	fieldname, err := getUserFieldName(usernameOrEmail)
+	if err != nil {
+		return login, errors.New("invalid login field")
 	}
-	err := db.QueryRow("SELECT username, email, password FROM users WHERE "+fieldname+" = ?", usernameOrEmail).Scan(&login.Username, &login.Email, &login.Password)
+	err = db.QueryRow("SELECT username, email, password FROM users WHERE "+fieldname+" = ?", usernameOrEmail).Scan(&login.Username, &login.Email, &login.Password)
 	if err != nil {
 		return login, errors.New("can't find username or email")
 	}
@@ -483,13 +501,11 @@ func DeleteSession(token string) error {
 }
 func GetUserID(usernameOrEmail string, db *sql.DB) (uuid.UUID, error) {
 	var userID uuid.UUID
-	var fieldname string
-	if strings.Contains(usernameOrEmail, "@") {
-		fieldname = "email"
-	} else {
-		fieldname = "username"
+	fieldname, err := getUserFieldName(usernameOrEmail)
+	if err != nil {
+		return uuid.Nil, err
 	}
-	err := db.QueryRow("SELECT user_id FROM users WHERE "+fieldname+" = ?", usernameOrEmail).Scan(&userID)
+	err = db.QueryRow("SELECT user_id FROM users WHERE "+fieldname+" = ?", usernameOrEmail).Scan(&userID)
 	if err != nil {
 		return uuid.Nil, err
 	}
@@ -541,13 +557,11 @@ func GetCommentReactions(commentID uuid.UUID) ([]Reaction, error) {
 }
 func GetUserIDByUsernameOrEmail(usernameOrEmail string) (uuid.UUID, error) {
 	var userID uuid.UUID
-	var fieldname string
-	if strings.Contains(usernameOrEmail, "@") {
-		fieldname = "email"
-	} else {
-		fieldname = "username"
+	fieldname, err := getUserFieldName(usernameOrEmail)
+	if err != nil {
+		return uuid.Nil, err
 	}
-	err := DB.QueryRow("SELECT user_id FROM users WHERE "+fieldname+" = ?", usernameOrEmail).Scan(&userID)
+	err = DB.QueryRow("SELECT user_id FROM users WHERE "+fieldname+" = ?", usernameOrEmail).Scan(&userID)
 	if err != nil {
 		return uuid.Nil, err
 	}

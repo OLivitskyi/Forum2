@@ -4,6 +4,13 @@ import { logout } from './auth.js';
 import { setFormMessage } from './formHandler.js';
 import { showError, clearError } from './errorHandler.js';
 
+// Escape HTML to prevent XSS attacks
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
 export const handleLoginFormSubmit = () => {
     const loginForm = document.getElementById("login");
     if (loginForm) {
@@ -182,18 +189,43 @@ export const loadAndRenderPosts = async () => {
         postsContainer.innerHTML = "";
 
         posts.forEach(post => {
-            const categories = post.categories.map(category => `<span class="category">${category.name}</span>`).join(', ');
             const postElement = document.createElement("div");
             postElement.classList.add("post");
-            postElement.innerHTML = `
-                <h3>${post.subject}</h3>
-                <p>${post.content}</p>
-                <div class="post-categories">Categories: ${categories}</div>
-                <div>
-                    <span>Likes: ${post.like_count}</span>
-                    <span>Dislikes: ${post.dislike_count}</span>
-                </div>
-            `;
+
+            // Create elements safely to prevent XSS
+            const title = document.createElement("h3");
+            title.textContent = post.subject;
+
+            const content = document.createElement("p");
+            content.textContent = post.content;
+
+            const categoriesDiv = document.createElement("div");
+            categoriesDiv.classList.add("post-categories");
+            categoriesDiv.textContent = "Categories: ";
+            post.categories.forEach((category, index) => {
+                const categorySpan = document.createElement("span");
+                categorySpan.classList.add("category");
+                categorySpan.textContent = category.name;
+                categoriesDiv.appendChild(categorySpan);
+                if (index < post.categories.length - 1) {
+                    categoriesDiv.appendChild(document.createTextNode(", "));
+                }
+            });
+
+            const statsDiv = document.createElement("div");
+            const likesSpan = document.createElement("span");
+            likesSpan.textContent = `Likes: ${post.like_count}`;
+            const dislikesSpan = document.createElement("span");
+            dislikesSpan.textContent = `Dislikes: ${post.dislike_count}`;
+            statsDiv.appendChild(likesSpan);
+            statsDiv.appendChild(document.createTextNode(" "));
+            statsDiv.appendChild(dislikesSpan);
+
+            postElement.appendChild(title);
+            postElement.appendChild(content);
+            postElement.appendChild(categoriesDiv);
+            postElement.appendChild(statsDiv);
+
             postsContainer.appendChild(postElement);
         });
     } catch (error) {

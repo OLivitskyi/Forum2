@@ -11,9 +11,21 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+// allowedOrigins contains the list of allowed origins for WebSocket connections
+var allowedOrigins = map[string]bool{
+	"http://localhost:8080":  true,
+	"https://localhost:8080": true,
+	"http://127.0.0.1:8080":  true,
+	"https://127.0.0.1:8080": true,
+}
+
 var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool {
-		return true
+		origin := r.Header.Get("Origin")
+		if origin == "" {
+			return true // Allow requests without Origin header (same-origin)
+		}
+		return allowedOrigins[origin]
 	},
 }
 var clients = make(map[*websocket.Conn]uuid.UUID)
@@ -23,7 +35,8 @@ var mutex = &sync.Mutex{}
 func handleConnections(w http.ResponseWriter, r *http.Request) {
 	ws, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Fatalf("Error upgrading to websocket: %v", err)
+		log.Printf("Error upgrading to websocket: %v", err)
+		http.Error(w, "Could not upgrade connection", http.StatusBadRequest)
 		return
 	}
 	defer func() {
